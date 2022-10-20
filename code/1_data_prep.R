@@ -54,11 +54,11 @@ for (site in sites) {
   flush.console()
   cat(blue(bold(paste(paste("\n", site, "\n")))))
   
-  source("data_prep/code/data_1_metainfo.R")                        # produces 1_metainfo.Rdata
+  source("code/data_prep/data_1_metainfo.R")                        # produces 1_metainfo.Rdata
 
-  source("data_prep/code/data_2_competition.R")                     # produces 2_competition.Rdata (not stored)
+  source("code/data_prep/data_2_competition.R")                     # produces 2_competition.Rdata (not stored)
 
-  source("data_prep/code/data_3a_mortality.R")                      # produces 3a_mortality.Rdata
+  source("code/data_prep/data_3a_mortality.R")                      # produces 3a_mortality.Rdata
 
 }
 
@@ -78,9 +78,9 @@ for (site in sites) {
   flush.console()
   cat(blue(bold(paste(paste("\n", site, "\n")))))
   
-  source("data_prep/code/data_1_metainfo.R")                        # produces 1_metainfo.Rdata
+  source("code/data_prep/data_1_metainfo.R")                        # produces 1_metainfo.Rdata
   
-  source("data_prep/code/data_3b_growth.R")                         # produces 3b_growth.Rdata
+  source("code/data_prep/data_3b_growth.R")                         # produces 3b_growth.Rdata
   
 }
 
@@ -94,7 +94,7 @@ for (site in sites) {
 for (site in sites) {
   flush.console()
   cat(blue(bold(paste(paste("\n", site, "\n")))))
-  source("data_prep/code/meta_abundances.R")
+  source("code/data_prep/meta_abundances.R")
 }
 
 
@@ -102,7 +102,7 @@ for (site in sites) {
 for (site in sites) {
   flush.console()
   cat(blue(bold(paste(paste("\n", site, "\n")))))
-  source("data_prep/code/meta_stature.R")
+  source("code/data_prep/meta_stature.R")
 }
 
 
@@ -110,7 +110,7 @@ for (site in sites) {
 for (site in sites) {
   flush.console()
   cat(blue(bold(paste(paste("\n", site, "\n")))))
-  source("data_prep/code/meta_growth.R")
+  source("code/data_prep/meta_growth.R")
 }
 
 
@@ -118,7 +118,7 @@ for (site in sites) {
 for (site in sites) {
   flush.console()
   cat(blue(bold(paste(paste("\n", site, "\n")))))
-  source("data_prep/code/meta_mortality.R")
+  source("code/data_prep/meta_mortality.R")
 }
 
 
