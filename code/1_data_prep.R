@@ -13,15 +13,14 @@ library(tidyr)
 
 # Define location of input and output -------------------------------------
 
-## Input
 
+## Input (raw data)
 # if not stated otherwise, use example data in repo
 # this is bci splitted up in half
 if (!exists("path_input")) path_input = "data_prep/input/"
 
 
-## Output
-
+## Output (prepared data)
 # if not stated otherwise, save in repo folders
 if (!exists("path_output")) path_output = "data_prep/output/"
 

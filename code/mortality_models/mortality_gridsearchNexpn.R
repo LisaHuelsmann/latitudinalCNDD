@@ -1,7 +1,7 @@
 
 
 # Mortality analyses
-# Species-specific models with decay optimization: BA
+# Species-specific models with decay optimization: N expn
 
 
 
@@ -9,17 +9,22 @@
 
 # Packages and data -------------------------------------------------------
 
-library(effects)
 library(dplyr)
 library(tidyr)
 library(broom)
 library(mgcv)
 library(mgcViz)
-library(performance)
-library(bayestestR)
+library(DHARMa)
+
+# import helper functions
+source("code/mortality_models/functions_marginal_effects_gam.R")
 
 
-source("code/functions_marginal_effects_gam.R")
+# get path objects from paths
+for (i in names(paths)) assign(i, paths[i])
+
+
+
 
 
 # Settings ----------------------------------------------------------------
@@ -41,8 +46,8 @@ dec_fun <- function(sigma, distance, type) {  # define decay function explicitly
 
 
 # chose predictors for local density
-predictors = c(con_BA = paste0("ba_con_", decay_type, "_", decay_con),
-               all_BA = paste0("ba_all_", decay_type, "_", decay_tot))
+predictors = c(con_N = paste0("n_con_", decay_type, "_", decay_con),
+               all_N = paste0("n_all_", decay_type, "_", decay_tot))
 
 
 
@@ -51,7 +56,7 @@ predictors = c(con_BA = paste0("ba_con_", decay_type, "_", decay_con),
 # Load data ---------------------------------------------------------------
 
 
-load(paste0("data_prep/data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
+load(paste0(path_output, "data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
 
 
 # rename data object
@@ -76,7 +81,7 @@ for (i in 1:length(predictors)) {
 dat_mort = dat_mort[!is.na(dat_mort$sp), ]
 
 # remove ferns and palms
-load(paste0("../ForestGEO_datacleaning@git/data_species/", site, "_species.Rdata"))
+load(paste0(path_input, "data_species/", site, "_species.Rdata"))
 dat_mort = dat_mort[dat_mort$sp %in% species$sp[species$fern.palm == "FALSE"], ]
 
 # remove NA and 0 in interval
@@ -100,10 +105,10 @@ dat_mort %>%
   group_by(sp) %>% 
   summarise(ndead = sum(surv_next==0),
             nsurv = sum(surv_next==1),
-            range_con_BA = max(con_BA) - min(con_BA),
-            max_con_BA = max(con_BA),
-            unique_con_BA = length(unique(con_BA)),
-            unique_all_BA = length(unique(all_BA)),
+            range_con_N = max(con_N) - min(con_N),
+            max_con_N = max(con_N),
+            unique_con_N = length(unique(con_N)),
+            unique_all_N = length(unique(all_N)),
             unique_dbh = length(unique(dbh))
   ) -> nsp
 
@@ -122,18 +127,18 @@ model_fit = function(data, speciesinfo) {
   
   # create model formula
   term_c = ifelse(length(unique(data$census)) > 1, " + s(census, bs = 're')", "")  # elevation term
-  form =  as.formula(paste0("mort_next ~ s(dbh, k = k1) + s(all_BA, k = k2)  + s(con_BA, k = k3)"
+  form =  as.formula(paste0("mort_next ~ s(dbh, k = k1) + s(all_N, k = k2)  + s(con_N, k = k3)"
                             , term_c))
   
   # chose penalty
   # set to default 10 (the same as -1)
   k1 = k2 = 10 
   if (k1 > speciesinfo$unique_dbh) k1 = speciesinfo$unique_dbh - 2
-  if (k2 > speciesinfo$unique_all_BA) k2 = speciesinfo$unique_all_BA - 2
+  if (k2 > speciesinfo$unique_all_N) k2 = speciesinfo$unique_all_N - 2
   
   # less flexible k for conspecific density
   k3 = 10
-  if (k3 > speciesinfo$unique_con_BA) k3 = speciesinfo$unique_con_BA - 2
+  if (k3 > speciesinfo$unique_con_N) k3 = speciesinfo$unique_con_N - 2
   
   
   # fit model
@@ -270,7 +275,7 @@ sums$AUC = unlist(aucs)
 
 interval = 5
 additive = round(pi*((20/1000)/2)^2, 5) # basal area (m2) of one more neighbor with dbh = 20 mm
-change = list(equilibrium = data.frame(con_BA = "paste('+', additive)"))
+change = list(equilibrium = data.frame(con_N = "paste('+', additive)"))
 
 
 
@@ -343,13 +348,12 @@ for (i in names(predictors)[grepl("con_", names(predictors))]) { # for all predi
 # Save results ------------------------------------------------------------
 
 save(list = c("AME", "rAME", "nsp", "coefs", "sums")
-     , file = paste0("out/mortality_models/"
+     , file = paste0(path_mortality
                      , run, "/"
-                     , format(decay_con, nsmall = 1), "_"
+                     , sprintf("%02d", decay_con), "_"
                      , sprintf("%02d", decay_tot), "/"
                      , site, "_mortality.Rdata"))
 
 rm(list = ls()[!(grepl("site", ls()) | ls()=="run" | ls()=="t0")])
-
 
 

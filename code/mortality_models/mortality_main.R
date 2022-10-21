@@ -1,7 +1,7 @@
 
 
 # Mortality analyses
-# Species-specific models with optimal
+# Species-specific models: main
 
 
 
@@ -16,7 +16,12 @@ library(mgcv)
 library(mgcViz)
 library(DHARMa)
 
-source("code/functions_marginal_effects_gam.R")
+# import helper functions
+source("code/mortality_models/functions_marginal_effects_gam.R")
+
+# get path objects from paths
+for (i in names(paths)) assign(i, paths[i])
+
 
 
 
@@ -72,8 +77,8 @@ additive = pi*((dbh_neighbor/1000)/2)^2 *         # basal area (m2) of one more 
 # Load data ---------------------------------------------------------------
 
 
-load(paste0("data_prep/data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
-load(paste0("data_prep/meta_stature/", site, "_stature.Rdata"))
+load(paste0(path_output, "data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
+load(paste0(path_output, "meta_stature/", site, "_stature.Rdata"))
 
 
 # rename data object
@@ -97,7 +102,7 @@ for (i in 1:length(predictors)) {
 dat_mort = dat_mort[!is.na(dat_mort$sp), ]
 
 # remove ferns and palms
-load(paste0("../ForestGEO_datacleaning@git/data_species/", site, "_species.Rdata"))
+load(paste0(path_input, "data_species/", site, "_species.Rdata"))
 dat_mort = dat_mort[dat_mort$sp %in% species$sp[species$fern.palm == "FALSE"], ]
 
 # remove NA and 0 in interval
@@ -109,34 +114,6 @@ dat_mort = dat_mort[dat_mort$dbh < 100, ]
 # save census as factor
 dat_mort$census = as.factor(dat_mort$census)
 table(dat_mort$census)
-
-
-
-
-# Randomize conspecific density -------------------------------------------
-
-
-set.seed(124)
-
-# randomize con_BA within species
-dat_mort %>% 
-  group_by(sp) %>%
-  mutate(con_BA = sample(con_BA, size = n())) %>% 
-  as.data.frame() -> dat_mort_new
-
-# check randomization result
-dat_mort %>% 
-  group_by(sp) %>% 
-  summarise(con_BA = mean(con_BA)) -> check_sim1
-dat_mort_new %>% 
-  group_by(sp) %>% 
-  summarise(con_BA = mean(con_BA)) -> check_sim2
-plot(check_sim1$con_BA, check_sim2$con_BA)
-
-# replace with original data
-dat_mort = dat_mort_new
-
-
 
 
 
@@ -499,7 +476,7 @@ for (i in names(predictors)[grepl("con_", names(predictors))]) { # for all predi
 
 # plot splines in pdf -----------------------------------------------------
 
-pdf(paste0("out/mortality_models/", run, "/", site, "_mortality.pdf"))
+pdf(paste0(path_mortality, run, "/", site, "_mortality.pdf"))
 for (i in 1:length(res_mod))  {
   
   # with mgcv
@@ -515,16 +492,78 @@ for (i in 1:length(res_mod))  {
     labs(title = names(res_mod)[i]) 
   print(pl, pages = 1)
   
-  
-  # pl = plot(vizmod, nsim = 20) + l_fitDens() + l_simLine(colour = 1) + theme(legend.position="none") +
-  #   labs(title = names(res_mod)[i])  + l_rug()
-  # print(pl, pages = 1)
-  
-  # plot(ALE(res_mod[[i]], x = "con_N", nbin = 100, type = "response"), nsim = 20) + l_simLine() + l_fitLine()
 }
 dev.off()
 
 
+
+
+
+
+
+# plot residuals ----------------------------------------------------------
+
+
+
+sums$test.spatial = NA
+sums$MoransIobs = NA
+sums$MoransIexp = NA
+sums$MoransIsd = NA
+
+
+pdf(paste0(path_mortality, run, "/", site, "_residuals.pdf"), width = 10)
+
+for (i in 1:length(res_mod))  {
+
+  sp = names(res_mod)[i]
+
+  # get data (for coordinates)
+  dat_sp = dat_mort[dat_mort$sp == sp, ]
+  if (nrow(dat_sp) == 0) {   # for rare species groups
+    sps = nsp$sp[which(nsp$rare_stature == sp)]
+    dat_sp = dat_mort[dat_mort$sp %in% sps, ]
+  }
+
+  # get model
+  mod = res_mod[[sp]]
+  
+  # get simulated residuals with DHARMa
+  res = simulateResiduals(mod)
+  
+  # Classic residual checks
+  par(mfrow = c(2, 3), oma = c(0, 0, 2, 0))
+  plotResiduals(res, quantreg = T)
+  plotResiduals(res, form = mod$model$dbh, quantreg = T, rank = F, xlab = "dbh (mm)")
+  plotResiduals(res, form = mod$model$all_BA, quantreg = T, rank = T, xlab = "all_BA (rank transformed)")
+  plotResiduals(res, form = mod$model$con_BA, quantreg = T, rank = T, xlab = "con_BA (rank transformed)")
+  plotResiduals(res, form = exp(mod$model$'(offset)'), quantreg = T, rank = F, xlab = "interval (yrs)")
+
+  # recalculate residuals for unique coordinates
+  res_spatial = recalculateResiduals(res, paste(dat_sp$gx, dat_sp$gy))
+  group_coor = do.call("rbind", strsplit(unique(res_spatial$group), split = " "))
+
+  # Spatial residual checks
+  testSpatial = testSpatialAutocorrelation(simulationOutput = res_spatial
+                                           , x = group_coor[, 1]
+                                           , y = group_coor[, 2]
+                                           , plot = F)
+
+  # assign results to sums
+  sums$test.spatial[sums$sp == sp] = testSpatial$p.value
+  sums$MoransIobs[sums$sp == sp] = testSpatial$statistic["observed"]
+  sums$MoransIexp[sums$sp == sp] = testSpatial$statistic["expected"]
+  sums$MoransIsd[sums$sp == sp] = testSpatial$statistic["sd"]
+
+  col = colorRamp(c("red", "white", "blue"))(res_spatial$scaledResiduals)
+  plot(group_coor[, 1], group_coor[, 2], col = rgb(col, maxColorValue = 255)
+       , main = testSpatial$method, cex.main = 0.8
+       , xlab = "x", ylab = "y", asp = 1, cex = 0.5
+  )
+
+  mtext(sp, outer = T)
+
+}
+dev.off()
 
 
 
@@ -535,9 +574,9 @@ dev.off()
 
 
 save(list = c("AME", "AMEsamples", "rAME", "rAMEsamples", "nsp", "nsp_rare", "coefs", "sums")
-     , file = paste0("out/mortality_models/", run, "/", site, "_mortality.Rdata"))
+     , file = paste0(path_mortality, run, "/", site, "_mortality.Rdata"))
 
-rm(list = ls()[!(grepl("site", ls()) | ls()=="run" | ls()=="t0")])
+rm(list = ls()[!(grepl("site", ls()) | grepl("path", ls()) | ls()=="run" | ls()=="t0" )])
 
 
 

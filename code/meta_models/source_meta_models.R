@@ -1,8 +1,6 @@
 
 
-# Analyze CNDD in mortality
-
-
+# Fit meta-regressions and create outputs
 
 library(gtsummary)
 library(flextable)
@@ -22,10 +20,11 @@ library(wesanderson)
 
 
 
-
+# get path objects from paths
+for (i in names(paths)) assign(i, paths[i])
 
 # create folder for output
-dir.create(paste0("out/mortality_models/", run, "/analysis_", outstyle))
+dir.create(paste0(path_meta, run))
 
 
 
@@ -34,7 +33,8 @@ dir.create(paste0("out/mortality_models/", run, "/analysis_", outstyle))
 
 
 # load combined results from run
-load(paste0("out/mortality_models/", run, "/global_mortality.Rdata"))
+load(paste0(path_mortality, run, "/global_mortality.Rdata"))
+
 
 # chose available results
 terms = unique(AMEsamples_global$term)[startsWith(unique(AMEsamples_global$term), "con_")]
@@ -57,7 +57,7 @@ ref_lat = 11.75
 # latitudes for plotting
 latitude_names = c("Tropical", "Subtropical", "Temperate")
 latitudes = c(11.75, 29.25, 45)
-
+lat_breaks = seq(0, 52, 1)
 
 
 
@@ -158,7 +158,7 @@ PCs = PCA$rotation[, 1:2]
 PCs_new <- Rotation(PCs, r*pi/180)
 
 # plot PCA
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/demographic_tradeoffs.pdf")
+pdf(paste0(path_meta, run, "/demographic_tradeoffs.pdf")
     , height = 5, width = 8)
 par(mfrow = c(1, 2))
 biplot(PCA, scale = F, cex = c(0.2, 1))
@@ -193,7 +193,7 @@ for (type in types) {
 # Plot overview predictors and species characteristics --------------------
 
 
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/data_overview.pdf")
+pdf(paste0(path_meta, run, "/data_overview.pdf")
     , height = 8, width = 8)
 
 # plot abundance vs demography
@@ -230,7 +230,7 @@ smoothScatter(M$abs_latitude, M$log_abundance
               , yaxt = "n"
               )
 axis(2, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
-m = mgcv::gam(M$log_abundance ~ s(M$abs_latitude, k = 5))
+m = try(mgcv::gam(M$log_abundance ~ s(M$abs_latitude, k = 5)), silent = T)
 text(grconvertX(0.05, from = "ndc")
      , grconvertY(0.45, from = "ndc")
      , labels = "c"
@@ -249,7 +249,7 @@ dev.off()
 
 
 # plot correlations
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/species_summary.pdf")
+pdf(paste0(path_meta, run, "/species_summary.pdf")
     , height = 8, width = 8)
 BayesianTools::correlationPlot(select(M, -c(site, sp)), method = "spearman")
 dev.off()
@@ -257,7 +257,7 @@ dev.off()
 
 
 # plot abundance vs demography per site
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/species_abundance_vs_demography_site.pdf")
+pdf(paste0(path_meta, run, "/species_abundance_vs_demography_site.pdf")
     , height = 11, width = 15)
 for (i in c("log_mortality", "log1p_growth")) {
   
@@ -284,7 +284,7 @@ dev.off()
 
 
 # plot demography vs abundance
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/species_demography_vs_abundance.pdf")
+pdf(paste0(path_meta, run, "/species_demography_vs_abundance.pdf")
     , height = 5, width = 8)
 par(mfrow = c(1, 2))
 for (i in c("log_mortality", "log1p_growth")) {
@@ -306,40 +306,53 @@ dev.off()
 # Plot estimates with map ---------------------------------------------
 
 
+# only if 23 sites are available
 
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/CNDDvsAbundance_map.pdf")
+
+pdf(paste0(path_meta, run, "/Fig1.pdf")
     , height = 247/25.4*0.9
     , width = 183/25.4)
 
 
 # Subpanel order
-site_order = c("fus", "hkk", "mos", "lam", "pas", "kha"
-               , "sin", "edo", "len", "kor"
-               , "idc", "ama", "lpl", "bci", "luq", "ucsc", "wfdp", "ldw"
-               , "wab", "scbi", "serc", "wyw", "zof")
-xlabels = c(F, F, F, F, F, T,
-            T, T, T, T, 
-            T, F, F, F, F, F, F, F,
-            T, T, T, T, T)
-ylabels = c(T, T, T, T, T, F,
-            F, F, F, F,
-            T, T, T, T, T, T, T, T,
-            F, F, F, F, F)
-
-# infos where to end lines
-x = c(0, 0, 0, 0, 0, 0, 
-      0.5, 0.5, 0.5, 0.5, 
-      1, 1, 1, 1, 1, 1, 1, 1,
-      0.5, 0.5, 0.5, 0.5, 0) 
-y = c(0.5, 0.5, 0.5, 0.5, 0.5, 1,
-      1, 1, 1, 1,
-      1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0,
-      0, 0, 0, 0, 0)
+if (length(sites) == 23) {
+  
+  site_order = c("fus", "hkk", "mos", "lam", "pas", "kha"
+                 , "sin", "edo", "len", "kor"
+                 , "idc", "ama", "lpl", "bci", "luq", "ucsc", "wfdp", "ldw"
+                 , "wab", "scbi", "serc", "wyw", "zof")
+  xlabels = c(F, F, F, F, F, T,
+              T, T, T, T, 
+              T, F, F, F, F, F, F, F,
+              T, T, T, T, T)
+  ylabels = c(T, T, T, T, T, F,
+              F, F, F, F,
+              T, T, T, T, T, T, T, T,
+              F, F, F, F, F)
+  
+  # infos where to end lines
+  x = c(0, 0, 0, 0, 0, 0, 
+        0.5, 0.5, 0.5, 0.5, 
+        1, 1, 1, 1, 1, 1, 1, 1,
+        0.5, 0.5, 0.5, 0.5, 0) 
+  y = c(0.5, 0.5, 0.5, 0.5, 0.5, 1,
+        1, 1, 1, 1,
+        1, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0,
+        0, 0, 0, 0, 0)
+  
+} else { 
+  
+  site_order = sites
+  xlabels = rep(T, length(sites))
+  ylabels = rep(T, length(sites))
+  x = rep(0.5, length(sites))
+  y = rep(0.5, length(sites))
+  
+}
 
 # Meta info sites
-Site_table = readxl::read_xlsx("data_prep/plot_sites_information.xlsx", sheet = 1)
+Site_table = readxl::read_xlsx(paste0(path_input, "global_metainfo/plot_sites_information.xlsx"), sheet = 1)
 
-lat_breaks = seq(0, 52, 1)
 Site_table %>%
   dplyr::filter(ID %in% site_order) %>%
   mutate(cuts = cut(abs(lat), breaks = lat_breaks, right = F)) %>%
@@ -348,8 +361,6 @@ site_names = Site_table$site
 
 # Color choice
 cuts_levels = levels(Site_table$cuts)
-# cols = rev(turbo(n = length(cuts_levels)))
-# cols = rev(viridis::inferno(n = length(cuts_levels)))
 cols = rev(wesanderson::wes_palette("Zissou1", length(cuts_levels), type = "continuous"))
 cols_order = cols[match(Site_table$cuts, cuts_levels)]  # reorder to match site_order
 
@@ -376,28 +387,33 @@ grat = st_graticule(lat = c(-90, -45, 0, 45, 90)
 
 
 for (term in terms) {
-
+  
   for (change in changes) {
-
+    
     for (type in types) {
-
+      
       # select output
       output = get(paste0(type, "sums_global"))
       sel = output$term == term & output$change == change
       dat = output[sel, ]
-
+      
       # Layout
       par(oma = c(1.3, 1.3, 0, 0))
-      layout(matrix(c(18:23,
-                      17, rep(24, 4), 25,
-                      16, rep(24, 4), 1,
-                      15, rep(24, 4), 2,
-                      14, rep(24, 4), 3, 
-                      13, rep(24, 4), 4, 
-                      12, rep(24, 4), 5, 
-                      11:6)
-                    , nrow = 8, byrow = T))
-
+      
+      if (length(sites) == 23) {
+        layout(matrix(c(18:23,
+                        17, rep(24, 4), 25,
+                        16, rep(24, 4), 1,
+                        15, rep(24, 4), 2,
+                        14, rep(24, 4), 3, 
+                        13, rep(24, 4), 4, 
+                        12, rep(24, 4), 5, 
+                        11:6)
+                      , nrow = 8, byrow = T))
+      } else {
+        layout(matrix(c(1, 2, 3, 3), nrow = 2, byrow = T), heights = c(0.3, 1))
+      }
+      
       # plot estimates versus abundance
       par(mar = c(1, 1.5, 0.2, 0.2))
       temp = plot_estimates_vsAbundance(dat, type = type, order = site_order, names = site_names
@@ -406,8 +422,8 @@ for (term in terms) {
                                         , returnXY = T, x = x, y = y
                                         , cols = cols_order, color.axes = "grey30"
                                         , markRare = T)
-
-
+      
+      
       # add map in center
       par(mar = c(1, 0, 0, 0))
       plot(st_geometry(dunia)
@@ -416,7 +432,7 @@ for (term in terms) {
            , xlim = c(st_bbox(dunia)[1]+5000000, st_bbox(dunia)[3]-1500000)
            , ylim = c(st_bbox(dunia)[2]+3000000, st_bbox(dunia)[4]))
       plot(st_geometry(grat)[2:4], add = T, col = "grey94", lwd = 2, lty = 2)
-
+      
       # connect panels and site coordinates
       par(xpd = T)
       for (i in 1:length(site_order)) {
@@ -428,23 +444,26 @@ for (term in terms) {
         )
       }
       par(xpd = F)
-
+      
       # add forest site coordinates
       plot(st_geometry(sites_sf), add = T, pch = 16, col = cols_order, cex = 1.4)
       # text(st_coordinates(sites_sf), sites_sf$Abbreviation)
-
+      
       # axes labels
       mtext("abundance (N/ha)", 1.5, outer = T, cex = 0.7)
       mtext("stabilizing CNDD (%)", 2.7, outer = T, cex = 0.7)
       # mtext(paste("CNDD assessed as", type, "in", term, "calculated at", change, "densities.")
-            # , 3, 1, outer = T, cex = 0.8)
-
-
+      # , 3, 1, outer = T, cex = 0.8)
+      
+      
     }
   }
 }
 
 dev.off()
+
+
+
 
 
 
@@ -520,81 +539,83 @@ for (term in terms) {
 # Plot mean and sigma -----------------------------------------------------
 
 
-
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/Fig3.pdf")
-    , height = 5.5, width = 11)
-
-for (i in 1:length(sitemean_list)) {
+# only if 23 sites are available
+if (length(sites) == 23) {
   
-  term = sitemean_list[[i]]$term
-  change = sitemean_list[[i]]$change
-  type = sitemean_list[[i]]$type
-  out = sitemean_list[[i]]$out
+  pdf(paste0(path_meta, run, "/Fig3.pdf")
+      , height = 5.5, width = 11)
   
-  # calculate CV (transformed scale)
-  out$CV = out$sigma/out$mean
-      
-  # take out values with negative average CNDD
-  out = out[which(out$mean > 0), ]
-  
-
-  par(mfrow = c(1, 2), mar = c(5, 4, 3, 1))
-  
-  # a) plot coefficient of variation against latitude
-  plot(CV ~ abs(latitude), out
-       , col = out$col, pch = 16, las = 1
-       , ylim = c(0, max(out$CV))
-       , xlab = "absolute latitude (°)"
-       , ylab = "coefficient of variation of CNDD"
-       , bty='l'
-  )
-  fit = lm(CV ~ abs(latitude), out)
-  lats = seq(0, max(out$latitude))
-  pred = predict(fit, newdata = data.frame(latitude = lats),  se.fit = T)
-  lines(lats, pred$fit)
-  polygon(c(lats, rev(lats))
-          , c(pred$fit + 1.96*pred$se.fit, rev(pred$fit - 1.96*pred$se.fit))
-          , col = add.alpha("black", 0.05)
-          , border = F)
-  abline(h = 0.4, col = "grey", lty = 2)
-  text(lats[1], pred$fit[1] + 0.1
-       , paste0("p=",round(summary(fit)$coef[2, 4], 2))
-       , adj = 0)
-  
-  
-  # b) plot standard deviation against mean (transformed scale)
-  par(mar = c(5, 6, 3, 1))
-  plot(sigma ~ mean, out
-       , col = out$col, pch = 16
-       , xlim = range(c(out$ci.lb, out$ci.ub))
-       , ylim = c(0, max(out$sigma))
-       , xlab = "mean CNDD (transformed scale)"
-       , ylab = ""
-       , bty='l'
-       , las = 1)
-  mtext("standard deviation of CNDD (transformed scale)", 2, line = 4)
-  segments(out$ci.lb, out$sigma, out$ci.ub, out$sigma, col = out$col)
-  for (cv in c(0.2, 0.4, 0.6)) {
-    lines(seq(0, max(out$ci.ub), len = 10), cv*seq(0, max(out$ci.ub), len = 10), col = "grey")
-    text(0.9*max(out$ci.ub), 1.1*cv*max(out$sigma), paste0("CV = ", cv), col = "grey")
+  for (i in 1:length(sitemean_list)) {
+    
+    term = sitemean_list[[i]]$term
+    change = sitemean_list[[i]]$change
+    type = sitemean_list[[i]]$type
+    out = sitemean_list[[i]]$out
+    
+    # calculate CV (transformed scale)
+    out$CV = out$sigma/out$mean
+    
+    # take out values with negative average CNDD
+    out = out[which(out$mean > 0), ]
+    
+    
+    par(mfrow = c(1, 2), mar = c(5, 4, 3, 1))
+    
+    # a) plot coefficient of variation against latitude
+    plot(CV ~ abs(latitude), out
+         , col = out$col, pch = 16, las = 1
+         , ylim = c(0, max(out$CV))
+         , xlab = "absolute latitude (°)"
+         , ylab = "coefficient of variation of CNDD"
+         , bty='l'
+    )
+    fit = lm(CV ~ abs(latitude), out)
+    lats = seq(0, max(out$latitude))
+    pred = predict(fit, newdata = data.frame(latitude = lats),  se.fit = T)
+    lines(lats, pred$fit)
+    polygon(c(lats, rev(lats))
+            , c(pred$fit + 1.96*pred$se.fit, rev(pred$fit - 1.96*pred$se.fit))
+            , col = add.alpha("black", 0.05)
+            , border = F)
+    abline(h = 0.4, col = "grey", lty = 2)
+    text(lats[1], pred$fit[1] + 0.1
+         , paste0("p=", round(summary(fit)$coef[2, 4], 2))
+         , adj = 0)
+    
+    
+    # b) plot standard deviation against mean (transformed scale)
+    par(mar = c(5, 6, 3, 1))
+    plot(sigma ~ mean, out
+         , col = out$col, pch = 16
+         , xlim = range(c(out$ci.lb, out$ci.ub))
+         , ylim = c(0, max(out$sigma))
+         , xlab = "mean CNDD (transformed scale)"
+         , ylab = ""
+         , bty='l'
+         , las = 1)
+    mtext("standard deviation of CNDD (transformed scale)", 2, line = 4)
+    segments(out$ci.lb, out$sigma, out$ci.ub, out$sigma, col = out$col)
+    for (cv in c(0.2, 0.4, 0.6)) {
+      lines(seq(0, max(out$ci.ub), len = 10), cv*seq(0, max(out$ci.ub), len = 10), col = "grey")
+      text(0.9*max(out$ci.ub), 1.1*cv*max(out$sigma), paste0("CV = ", cv), col = "grey")
+    }
+    
+    text(grconvertX(0.05, from = "ndc")
+         , grconvertY(0.95, from = "ndc")
+         , labels = "a"
+         , cex = 3/2
+         , xpd=NA)
+    text(grconvertX(0.5, from = "ndc")
+         , grconvertY(0.95, from = "ndc")
+         , labels = "b"
+         , cex = 3/2
+         , xpd=NA)
+    
   }
   
-  text(grconvertX(0.05, from = "ndc")
-       , grconvertY(0.95, from = "ndc")
-       , labels = "a"
-       , cex = 3/2
-       , xpd=NA)
-  text(grconvertX(0.5, from = "ndc")
-       , grconvertY(0.95, from = "ndc")
-       , labels = "b"
-       , cex = 3/2
-       , xpd=NA)
+  dev.off()
   
 }
-
-dev.off()
-
-
 
 
 
@@ -631,7 +652,7 @@ if (any(!is.null(sums_global$test.spatial))) {
   my_doc %>%
     body_add_flextable(var) -> my_doc
 
-  print(my_doc, target = paste0("out/mortality_models/", run, "/analysis_", outstyle, "/autocorrelation.docx")) %>% invisible()
+  print(my_doc, target = paste0(path_meta, run, "/autocorrelation.docx")) %>% invisible()
 
 
 }
@@ -700,13 +721,6 @@ for (term in terms) {
       D = cooks.distance(mod, reestimate = F, ncpus = ncpu_meta, parallel = "snow", progbar = F)
       exclude = D>0.005
       dat_reduced = dat[!exclude, ]
-      
-      
-      
-      # cluster_D = cooks.distance(mod, cluster = dat$site, reestimate = T, ncpus = ncpu_meta, parallel = "snow", progbar = T)
-      # sort(cluster_D)
-      # exclude = names(sort(cluster_D, decreasing = T))[1:2]
-      # dat_reduced = dat[dat$site != exclude[2], ]
 
 
       # fit abundance-mediated model with reduced data
@@ -810,7 +824,7 @@ for (term in terms) {
 # save reduced model list to use for comparisons
 mod_list_red = lapply(mod_list, function(x) x[!names(x) %in% c("mod0x", "mod1x", "mod2", "mod3")])
 save(list = c("mod_list_red", "ref_abund", "ref_lat", ls()[sapply(ls(), function(x) is.function(get(x)))])
-     , file = paste0("out/mortality_models/", run, "/analysis_", outstyle, "/metamodels.Rdata"))
+     , file = paste0(path_meta, run, "/metamodels.Rdata"))
 
 
 # wrap mod_list in res[[run]] 
@@ -829,7 +843,7 @@ rm(mod_list_red, mod_list)
 
 
 # CNDD for three abundances against latitude
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/model_predictions_latitude.pdf")
+pdf(paste0(path_meta, run, "/model_predictions_latitude.pdf")
     , height = 4)
 
 # loop through CNDD definitions
@@ -854,7 +868,7 @@ dev.off()
 
 
 # reduced model (without abundance)
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/model_predictions_latitude_noabund.pdf")
+pdf(paste0(path_meta, run, "/model_predictions_latitude_noabund.pdf")
     , height = 4)
 
 # loop through CNDD definitions
@@ -878,7 +892,7 @@ dev.off()
 
 
 # CNDD against abundance at three latitudes
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/model_predictions_abundance.pdf")
+pdf(paste0(path_meta, run, "/model_predictions_abundance.pdf")
     , height = 4)
 
 # loop through CNDD definitions
@@ -909,7 +923,7 @@ dev.off()
 # 2-4) CNDD against abundance at three latitudes: in color and at specified lats
 
 # full dataset
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/Fig2.pdf")
+pdf(paste0(path_meta, run, "/Fig2.pdf")
     , height = 7)
 
 # loop through CNDD definitions
@@ -963,7 +977,7 @@ dev.off()
 
 
 # reduced dataset
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/Fig2_reduced_data.pdf")
+pdf(paste0(path_meta, run, "/Fig2_reduced_data.pdf")
     , height = 7)
 
 # loop through CNDD definitions
@@ -1015,9 +1029,9 @@ dev.off()
 
 # https://stats.stackexchange.com/questions/155693/metafor-package-bias-and-sensitivity-diagnostics
 
-pdf(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/model_checks.pdf"))
+pdf(paste0(path_meta, run, "/model_checks.pdf"))
 
-lapply(res[[run]], function(x){
+lapply(res[[run]], function(x) {
 
   par(mfrow = c(2, 2), las = 1, mar = c(4, 2, 3, 1))
 
@@ -1126,12 +1140,12 @@ for (i in settings$names) {
       
       theme_booktabs()
   })
-  # my_doc <- read_docx("../manuscript/appendix_style.docx")
+  
   my_doc <- read_docx()
 
   # use walk (the invisible function of map) to include all tables in one doc
   walk(my_list, write_word_table, my_doc)
-  print(my_doc, target = paste0("out/mortality_models/", run, "/analysis_", outstyle, "/model_summaries_"
+  print(my_doc, target = paste0(path_meta, run, "/model_summaries_"
                                 , settings$labels[which(settings$names == i)], ".docx")) %>% invisible()
 
 }

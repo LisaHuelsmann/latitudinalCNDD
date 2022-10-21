@@ -55,8 +55,7 @@ varname <- apply(varname, 1, function(x) paste(x[1], "thresh", x[2], sep = "_"))
 
 # range of decay values that should be tested (only for largest distance at the moment)
 # sigma parameterization
-decay =  c(seq(1, 4.5, 0.5), seq(5, 25, 1))
-# previous (beta) parameterization beta = 1/sigma
+decay =  seq(1, 25, 1)
 
 # names for columns with exponential and exponential-normal decay
 decay_names_exp = paste("exp", decay, sep = "_")

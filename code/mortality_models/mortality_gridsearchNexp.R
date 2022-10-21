@@ -1,7 +1,7 @@
 
 
 # Mortality analyses
-# Species-specific models with decay optimization: N
+# Species-specific models with decay optimization: N exp
 
 
 
@@ -9,17 +9,22 @@
 
 # Packages and data -------------------------------------------------------
 
-library(effects)
 library(dplyr)
 library(tidyr)
 library(broom)
 library(mgcv)
 library(mgcViz)
-library(performance)
-library(bayestestR)
+library(DHARMa)
+
+# import helper functions
+source("code/mortality_models/functions_marginal_effects_gam.R")
 
 
-source("code/functions_marginal_effects_gam.R")
+# get path objects from paths
+for (i in names(paths)) assign(i, paths[i])
+
+
+
 
 
 # Settings ----------------------------------------------------------------
@@ -51,7 +56,7 @@ predictors = c(con_N = paste0("n_con_", decay_type, "_", decay_con),
 # Load data ---------------------------------------------------------------
 
 
-load(paste0("data_prep/data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
+load(paste0(path_output, "data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
 
 
 # rename data object
@@ -76,7 +81,7 @@ for (i in 1:length(predictors)) {
 dat_mort = dat_mort[!is.na(dat_mort$sp), ]
 
 # remove ferns and palms
-load(paste0("../ForestGEO_datacleaning@git/data_species/", site, "_species.Rdata"))
+load(paste0(path_input, "data_species/", site, "_species.Rdata"))
 dat_mort = dat_mort[dat_mort$sp %in% species$sp[species$fern.palm == "FALSE"], ]
 
 # remove NA and 0 in interval
@@ -343,13 +348,12 @@ for (i in names(predictors)[grepl("con_", names(predictors))]) { # for all predi
 # Save results ------------------------------------------------------------
 
 save(list = c("AME", "rAME", "nsp", "coefs", "sums")
-     , file = paste0("out/mortality_models/"
+     , file = paste0(path_mortality
                      , run, "/"
-                     , format(decay_con, nsmall = 1), "_"
+                     , sprintf("%02d", decay_con), "_"
                      , sprintf("%02d", decay_tot), "/"
                      , site, "_mortality.Rdata"))
 
 rm(list = ls()[!(grepl("site", ls()) | ls()=="run" | ls()=="t0")])
-
 
 

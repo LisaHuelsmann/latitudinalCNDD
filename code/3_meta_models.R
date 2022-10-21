@@ -1,8 +1,10 @@
 
 
 
-# Analyze CNDD in mortality
-# sources analysis scripts
+# Analyze global CNDD patterns
+
+# Includes the following steps:
+# Run analysis script for main and randomized mortality models
 
 
 library(tidyr)
@@ -14,24 +16,34 @@ library(devtools)
 
 
 
+# Define location of input and output -------------------------------------
+
+# if not stated otherwise, load and save from/in repo folders
+
+
+# Data prep input
+if (!exists("path_input")) path_input = "data_prep/input/"
+
+# Data prep output
+if (!exists("path_output")) path_output = "data_prep/output/"
+
+# Analysis outputs
+if (!exists("path_mortality")) path_mortality = "out/mortality_models/"
+if (!exists("path_meta")) path_meta = "out/meta_models/"
+
+
+
+
 # Settings ----------------------------------------------------------------
 
 
-# Define outstyle
-outstyle = "j"
+# chose runs
+runs = c("main", "randomizedMort", "randomizedConD")
+run_names = c("Original dataset",
+              "Randomized tree status",
+              "Randomized conspecific densities")
 
-# chose model runs
-# runs = c("ax", "fa", "fb", "fc")
-# runs = c("zb", "zc")
-# runs = c("zc", "fd", "fe", "ff")
-# runs = c("zd")
-# runs = c("fg", "fh")
-# runs = "zf"
-runs = c("fi")
-# runs = c("fj")
-# runs = c("zf", "fi", "fj")
-
-# numper cpu
+# number cpu
 ncpu = length(runs)
 ncpu_meta = 6
 
@@ -42,41 +54,26 @@ ncpu_meta = 6
 
 
 cl <- makeCluster(ncpu)
-analyze_run = function(run, outstyle, ncpu_meta) {
-  
-  # turbo colors
-  devtools::source_gist("https://gist.github.com/jlmelville/be981e2f36485d8ef9616aef60fd52ab")
+analyze_run = function(run, ncpu_meta, paths) {
   
   # source analysis functions
-  source("code/functions_analysis.R", local = T)
+  source("code/meta_models/functions_meta_models.R", local = T)
   
   # analyze results
-  source(paste0("code/__mortality_2", outstyle, "_analysis.R"), local = T) # must be local to use run object
+  source(paste0("code/meta_models/source_meta_models.R"), local = T) # must be local to use run object
   
   # Session info
-  sink(paste0("out/mortality_models/", run,  "/analysis_", outstyle, "/", "sessionInfo.txt"))
+  sink(paste0(path_meta, "/", run,  "/sessionInfo.txt"))
   sessionInfo()
   sink()
   
 }
-result <- pblapply(cl = cl, runs, analyze_run, outstyle = outstyle, ncpu_meta = ncpu_meta)
+result <- pblapply(cl = cl, runs, analyze_run, ncpu_meta = ncpu_meta,
+                   paths = list(path_output = path_output, 
+                                path_input = path_input, 
+                                path_mortality = path_mortality,
+                                path_meta = path_meta))
 stopCluster(cl)
-
-
-
-# for h analysis and ay run:         51m 17s (I think on DELL?)
-# for i analysis and ay run:     01h 04m 16s (on DELL)
-# for h analysis and az run:         43m 54s (on server)
-# for h analysis and za run:         44m 03s (on server)
-# for h analysis and zb run:         17m 06s (on MAC) ncpu_meta = 3
-# for h analysis and 4 runs:         24m 09s (on UBT server) ncpu_meta = 3
-# for h analysis and zc runs:        24m 09s (on UBT server) ncpu_meta = 3
-# for h analysis and fe ff runs:     19m 47s (on UBT server) ncpu_meta = 8
-# for j analysis and zf runs:    04h 14m 17s (on UBT server) ncpu_meta = 6
-
-
-
-
 
 
 
@@ -87,19 +84,6 @@ stopCluster(cl)
 # Several run comparison figure -------------------------------------------
 
 
-
-# Define outstyle
-outstyle = "j" # must be the same for all because of transformation functions
-
-# chose model runs
-runs = c("zf", "fi", "fj")
-
-# names for runs
-run_names = c("Original dataset",
-              "Randomized conspecific densities",
-              "Randomized tree status"
-              )
-
 # latitudes for plotting
 latitude_names = c("Tropical", "Subtropical", "Temperate")
 latitudes = c(11.75, 29.25, 45)
@@ -108,14 +92,15 @@ latitudes = c(11.75, 29.25, 45)
 # Load fitted models, save in list res
 res = list()
 for (run in runs) {
-  load(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/metamodels.Rdata"))
+  load(paste0(path_meta, run, "/metamodels.Rdata"))
   res[[run]] = mod_list_red
 }
 
 
 
 # Fig 2 with three runs
-pdf(paste0("out/mortality_models/comparison_", paste(runs, collapse = "_"), "_outstyle_", outstyle, ".pdf")
+dir.create(paste0(path_meta, "comparison"))
+pdf(paste0(path_meta, "comparison/", "main_vs_randomized.pdf")
     , height = 7)
 
 # loop through CNDD definitions
@@ -165,14 +150,11 @@ dev.off()
 
 
 
-# Define outstyle
-outstyle = "j"
-
 # chose model runs
-run = "zf"
+run = "main"
 
 # Load fitted models
-load(paste0("out/mortality_models/", run, "/analysis_", outstyle, "/metamodels.Rdata"))
+load(paste0(path_meta, run, "/metamodels.Rdata"))
 
 
 # Choose CNDD definition

@@ -22,26 +22,27 @@ load(paste0(path_output, "data_3a_mortality/", site, "_tree_3a_mortality_exp.Rda
 
 
 
-# Mean species growth rate ------------------------------------------------
+
+# Mean species mortality rate ---------------------------------------------
 
 
 # annualized via cloglog model with offset
 mort_glm = function(mort_next, interval) {
-  mod =  glm(mort_next ~ 1 + offset(log(interval)), family = binomial(link = "cloglog"))
+  mod = glm(mort_next ~ 1 + offset(log(interval)), family = binomial(link = "cloglog"))
   return(mod$family$linkinv(coef(mod)[1]))
 }
 
 tree_mort %>%  
   filter(!is.na(interval) & interval > 0) %>% 
   group_by(sp) %>%
-  summarise(mort_rate = mort_glm(mort_next, interval)) %>% 
+  summarise(mort_rate = suppressWarnings(mort_glm(mort_next, interval))) %>% 
   as.data.frame() -> mort
 
 
 
 
-# Size-dependent growth ---------------------------------------------------
 
+# Size-dependent mortality ------------------------------------------------
 
 mort_glm_site = function(mort_next, interval, dbh) {
   mod =  glm(mort_next ~ I(dbh-20) + offset(log(interval)), family = binomial(link = "cloglog"))
@@ -51,7 +52,7 @@ mort_glm_site = function(mort_next, interval, dbh) {
 tree_mort %>% 
   filter(!is.na(interval) & interval > 0) %>% 
   group_by(sp) %>% 
-  summarise(mort_rate = mort_glm_site(mort_next, interval, dbh)) %>% 
+  summarise(mort_rate = suppressWarnings(mort_glm_site(mort_next, interval, dbh))) %>% 
   as.data.frame() -> mort_size
 
 mort$mort_rate_20 = mort_size$mort_rate[match(mort$sp, mort_size$sp)]

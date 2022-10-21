@@ -1,7 +1,7 @@
 
 
 
-# Generate tables 
+# Generate tables for Extended Data
 
 
 library(dplyr)
@@ -9,6 +9,8 @@ library(flextable)
 library(officer)
 
 
+
+dir.create(paste0(path_tables, run))
 
 
 

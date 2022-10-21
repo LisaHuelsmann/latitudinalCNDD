@@ -23,23 +23,20 @@
 
 
 # Meta info sites
-Site_table = readxl::read_xlsx("data_prep/plot_sites_information.xlsx", sheet = 1)
+Site_table = readxl::read_xlsx(paste0(path_input, "global_metainfo/plot_sites_information.xlsx"), sheet = 1)
 
 # Abundances
-load(paste0("data_prep/meta_abundances/", site, "_abundances.Rdata"))
-
-# Clusters
-load(paste0("data_prep/meta_clusters/", site, "_clusters.Rdata"))
+load(paste0(path_output, "meta_abundances/", site, "_abundances.Rdata"))
 
 # Stature
-load(paste0("data_prep/meta_stature/", site, "_stature.Rdata"))
+load(paste0(path_output, "meta_stature/", site, "_stature.Rdata"))
 stature = as.data.frame(stature)
 
 # Growth
-load(paste0("data_prep/meta_growth/", site, "_growth.Rdata"))
+load(paste0(path_output, "meta_growth/", site, "_growth.Rdata"))
 
 # Mortality
-load(paste0("data_prep/meta_mortality/", site, "_mortality.Rdata"))
+load(paste0(path_output, "meta_mortality/", site, "_mortality.Rdata"))
 
 
 
@@ -93,16 +90,6 @@ for (i in output_objects) {
   growth$abundance_BA = abundances$BAha[match(growth$sp, abundances$sp)]  
   mort$abundance_BA = abundances$BAha[match(mort$sp, abundances$sp)]  
   
-  
-  
-  # add cluster per species
-  temp$cluster = clusters$clust_hier[match(temp$sp, clusters$sp)]  
-  
-  # add mean abundance for rare species
-  temp$cluster[temp$sp == "Rare_tree"] = names(sort(table(clusters$clust_hier[clusters$sp %in% 
-                                                                                nsp$sp[which(nsp$rare_stature == "Rare_tree")]]), decreasing = T)[1])
-  temp$cluster[temp$sp == "Rare_shrub"] = names(sort(table(clusters$clust_hier[clusters$sp %in% 
-                                                                                 nsp$sp[which(nsp$rare_stature == "Rare_shrub")]]), decreasing = T)[1])
   
   
   # add max dbh variables

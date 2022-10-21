@@ -1,7 +1,7 @@
 
 
 # Mortality analyses
-# Species-specific models with optimal
+# Species-specific models: randomized mortality status
 
 
 
@@ -16,7 +16,11 @@ library(mgcv)
 library(mgcViz)
 library(DHARMa)
 
-source("code/functions_marginal_effects_gam.R")
+# import helper functions
+source("code/mortality_models/functions_marginal_effects_gam.R")
+
+# get path objects from paths
+for (i in names(paths)) assign(i, paths[i])
 
 
 
@@ -72,8 +76,8 @@ additive = pi*((dbh_neighbor/1000)/2)^2 *         # basal area (m2) of one more 
 # Load data ---------------------------------------------------------------
 
 
-load(paste0("data_prep/data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
-load(paste0("data_prep/meta_stature/", site, "_stature.Rdata"))
+load(paste0(path_output, "data_3a_mortality/", site, "_tree_3a_mortality_", decay_type, ".Rdata"))
+load(paste0(path_output, "meta_stature/", site, "_stature.Rdata"))
 
 
 # rename data object
@@ -97,7 +101,7 @@ for (i in 1:length(predictors)) {
 dat_mort = dat_mort[!is.na(dat_mort$sp), ]
 
 # remove ferns and palms
-load(paste0("../ForestGEO_datacleaning@git/data_species/", site, "_species.Rdata"))
+load(paste0(path_input, "data_species/", site, "_species.Rdata"))
 dat_mort = dat_mort[dat_mort$sp %in% species$sp[species$fern.palm == "FALSE"], ]
 
 # remove NA and 0 in interval
@@ -497,7 +501,8 @@ for (i in names(predictors)[grepl("con_", names(predictors))]) { # for all predi
 
 # plot splines in pdf -----------------------------------------------------
 
-pdf(paste0("out/mortality_models/", run, "/", site, "_mortality.pdf"))
+
+pdf(paste0(path_mortality, run, "/", site, "_mortality.pdf"))
 for (i in 1:length(res_mod))  {
   
   # with mgcv
@@ -513,12 +518,6 @@ for (i in 1:length(res_mod))  {
     labs(title = names(res_mod)[i]) 
   print(pl, pages = 1)
   
-  
-  # pl = plot(vizmod, nsim = 20) + l_fitDens() + l_simLine(colour = 1) + theme(legend.position="none") +
-  #   labs(title = names(res_mod)[i])  + l_rug()
-  # print(pl, pages = 1)
-  
-  # plot(ALE(res_mod[[i]], x = "con_N", nbin = 100, type = "response"), nsim = 20) + l_simLine() + l_fitLine()
 }
 dev.off()
 
@@ -533,9 +532,9 @@ dev.off()
 
 
 save(list = c("AME", "AMEsamples", "rAME", "rAMEsamples", "nsp", "nsp_rare", "coefs", "sums")
-     , file = paste0("out/mortality_models/", run, "/", site, "_mortality.Rdata"))
+     , file = paste0(path_mortality, run, "/", site, "_mortality.Rdata"))
 
-rm(list = ls()[!(grepl("site", ls()) | ls()=="run" | ls()=="t0")])
+rm(list = ls()[!(grepl("site", ls()) | grepl("path", ls()) | ls()=="run" | ls()=="t0" )])
 
 
 

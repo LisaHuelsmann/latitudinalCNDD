@@ -1,12 +1,14 @@
 
 
-# comparison of decay values
-# full factorial 
+# Grid search comparison to identify optimal density definitions
 
 
 library(dplyr)   # for data wrangling
 library(viridis) # for colors
-library(fields)  # for image.plot
+
+
+# create directory
+dir.create(paste0(path_mortality, "gridsearch_summary"))
 
 
 
@@ -14,23 +16,13 @@ library(fields)  # for image.plot
 
 
 # chose model runs
-# NOTE:these must be based on the same data and particularly the same max distance (i.e. check columns Data_from and Max_thresh)
+# NOTE:these must be based on the same data and particularly the same max distance
 
 
 ### for full exploration
-settings = data.frame(run = c( "el", "ek", "ej", "ei")
+settings = data.frame(runs = c("gridsearchNexp",  "gridsearchNexpn", "gridsearchBAexp", "gridsearchBAexpn")
                       , decay_type = c("exp", "expn", "exp", "expn")
                       , term = c("N", "N", "BA", "BA"))
-
-# ### for subset
-# settings = data.frame(run = c("ei", "ej")
-#                       , decay_type = c("expn", "exp")
-#                       , term = c("BA", "BA"))
-
-# # for full and subset
-# settings = data.frame(run = c("ec", "ed", "ee", "ef", "eg", "eh")
-#                       , decay_type = c("expn", "expn", "exp", "exp", "expn", "exp")
-#                       , term = c("N", "BA", "N", "BA", "BA", "BA"))
 
 
 # object for all results
@@ -40,7 +32,7 @@ sums_all = data.frame()
 for (s in 1:nrow(settings)) {
   
   # load combined data
-  load(paste0("out/mortality_models/", settings$run[s], "/combined_mortality.Rdata"))
+  load(paste0(path_mortality, settings$run[s], "/combined_mortality.Rdata"))
   temp = sums_combined
   
   # chose columns (not all outputs have the same)
@@ -109,7 +101,7 @@ sums_all_mod %>%
 
 # check if really the same number of models was used
 table(sums_total$run, sums_total$nvalues)
-# YES, 169 combinations, 2500 species
+# YES, 169 combinations
 
 
 
@@ -155,7 +147,7 @@ plot_map = function(run, term, type, criterion, optimum = T) {
 # Plot sum of log likelihood ----------------------------------------------
 
 
-pdf(paste0("out/mortality_models/", settings$run[1], "/sumLL_", paste(settings$run, collapse = "_"), ".pdf"), height = 9, width = 9)
+pdf(paste0(path_mortality, "/gridsearch_summary/sumLL.pdf"), height = 9, width = 9)
 par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings)))), mar = c(4, 4, 2, 1), las = 1)
 
 # get global optimum
@@ -170,21 +162,13 @@ for (s in 1:nrow(settings)) {
 }
 dev.off()
 
-# copy figure to all other run folders
-for (i in 2:nrow(settings)) {
-  file.copy(paste0("out/mortality_models/", settings$run[1], "/sumLL_", paste(settings$run, collapse = "_"), ".pdf")
-            , paste0("out/mortality_models/", settings$run[i], "/")
-            , overwrite = T)
-}
-
-
 
 
 
 # Plot mean of AUC --------------------------------------------------------
 
 
-pdf(paste0("out/mortality_models/", settings$run[1], "/meanAUC_", paste(settings$run, collapse = "_"), ".pdf"), height = 9, width = 9)
+pdf(paste0(path_mortality, "/gridsearch_summary/meanAUC.pdf"), height = 9, width = 9)
 par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings)))), mar = c(4, 4, 2, 1), las = 1)
 
 # get global optimum
@@ -199,19 +183,12 @@ for (s in 1:nrow(settings)) {
 }
 dev.off()
 
-# copy figure to all other run folders
-for (i in 2:nrow(settings)) {
-  file.copy(paste0("out/mortality_models/", settings$run[1], "/meanAUC_", paste(settings$run, collapse = "_"), ".pdf")
-            , paste0("out/mortality_models/", settings$run[i], "/")
-            , overwrite = T)
-}
-
 
 
 # Save global optimum -----------------------------------------------------
 
 
-sink(paste0("out/mortality_models/", settings$run[1], "/globalOpt_", paste(settings$run, collapse = "_"), ".txt"))
+sink(paste0(path_mortality, "/gridsearch_summary/globalOpt.txt"))
 for (criterion in c("sumlogLik", "meanAUC")) {
   opt = sums_total[which.max(sums_total[, criterion]), ]
   cat(criterion, "is optimal at", "\n")
@@ -219,78 +196,18 @@ for (criterion in c("sumlogLik", "meanAUC")) {
   cat(opt$decay_type, "decay", "\n")
   cat(paste(c("conspecific", "total"), "decay =", opt[, c("decay_con", "decay_tot")], collapse = "\n"), "\n", "\n")
 }
-sink()
 
-# copy figure to all other run folders
-for (i in 2:nrow(settings)) {
-  file.copy(paste0("out/mortality_models/", settings$run[1], "/globalOpt_", paste(settings$run, collapse = "_"), ".txt")
-            , paste0("out/mortality_models/", settings$run[i], "/")
-            , overwrite = T)
-}
-
-
-
-
-
-# Compare AUC at AUC and LL optimum ---------------------------------------
-
-
+# AUC difference at AUC and LL optimum
 opt_AUC = sums_total[which.max(sums_total[, "meanAUC"]), ]$meanAUC
 opt_LL = sums_total[which.max(sums_total[, "sumlogLik"]), ]$meanAUC
-opt_AUC-opt_LL
+cat("AUC difference between AUC and LL optimum =", round(opt_AUC-opt_LL, 3), "\n") 
+
+sink()
 
 
 
-# Site specific optimum ---------------------------------------------------
-
-
-sums_all_mod %>% 
-  filter(!site_sp %in% incomplete) %>%
-  group_by(site, latitude, run, term, decay_con, decay_tot, decay_type) %>% 
-  summarise(sumlogLik = sum(logLik),
-            meanlogLik = mean(logLik), 
-            meanAUC = mean(AUC, na.rm = T),
-            medianAUC = median(AUC, na.rm = T),
-            nvalues = n()) %>% 
-  group_by(site) -> sums_total_site
-
-
-sums_total_site %>% 
-  filter(sumlogLik == max(sumlogLik)) -> site_opt
-
-# there is quite some variability between sites
-hist(site_opt$decay_con[site_opt$decay_type == "exp"])
-hist(site_opt$decay_con[site_opt$decay_type == "expn"])
-hist(site_opt$decay_tot[site_opt$decay_type == "exp"])
-hist(site_opt$decay_tot[site_opt$decay_type == "expn"])
-plot(decay_con ~ nvalues, site_opt)
-plot(decay_con ~ decay_tot, site_opt)
-plot(decay_con ~ latitude, site_opt)
-
-
-# there is no pattern with latitude
 
 
 
-# Species specific optimum ---------------------------------------------------
 
-sums_all_mod %>% 
-  filter(!site_sp %in% incomplete) %>%
-  group_by(site_sp, decay_type) %>% 
-  filter(logLik == max(logLik)) -> sums_total_species
-
-opt_species_exp = sums_total_species[sums_total_species$decay_type == "exp", ]
-opt_species_expn = sums_total_species[sums_total_species$decay_type == "expn", ]
-
-smoothScatter(opt_species_exp$decay_con, opt_species_exp$decay_tot)
-hist(opt_species_exp$decay_con)
-hist(opt_species_expn$decay_con)
-
-scatter.smooth(opt_species_exp$decay_con, opt_species_exp$logLik)
-scatter.smooth(opt_species_expn$decay_con, opt_species_expn$logLik)
-scatter.smooth(opt_species_exp$decay_con, opt_species_exp$logLik, ylim = c(-1000, 0))
-
-
-scatter.smooth(log(opt_species_exp$abundance), opt_species_exp$logLik)
-scatter.smooth(log(opt_species_expn$abundance), opt_species_expn$logLik)
 
