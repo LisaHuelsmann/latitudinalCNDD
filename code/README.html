@@ -367,10 +367,20 @@ pre code {
 
 <div id="code-to-run-all-steps-of-the-latitudinal-cndd-analysis" class="section level1">
 <h1>Code to run all steps of the latitudinal CNDD analysis</h1>
-<p>It includes the following steps</p>
+<p>It includes the following steps, which can be completed by executing
+the respective R script.</p>
 <ol style="list-style-type: decimal">
 <li>Data preparation <a href="/code/1_data_prep.R">1_data_prep.R</a></li>
+<li>Mortality models <a href="/code/2_mortality_models.R">2_mortality_models.R</a></li>
+<li>Meta models <a href="/code/3_meta_models.R">3_meta_models.R</a></li>
+<li>Tables <a href="/code/4_tables.R">4_tables.R</a></li>
 </ol>
+<p>Most of these scripts source other lower level scripts for additional
+functions and analysis steps, which can be found in the respective <a href="/code/">code folder</a>.</p>
+<p>The results that are produced during each step of the analysis are
+stored either in the folder <a href="/data_prep">data_prep</a> or in the
+folder <a href="/out">out</a> (mortality models, meta-regressions,d and
+tables).</p>
 </div>
 
 
