@@ -36,7 +36,7 @@ for (s in 1:nrow(settings)) {
   temp = sums_combined
   
   # chose columns (not all outputs have the same)
-  temp = temp[, c("logLik", "AIC", "nobs", "sp", "AUC", "site", "latitude", "abundance", "decay_con", "decay_tot")]
+  temp = temp[, c("logLik", "AIC", "nobs", "sp", "AUC", "site", "decay_con", "decay_tot")]
   
   # add term, run and decay type
   temp$run = settings$run[s]
@@ -202,10 +202,15 @@ opt_AUC = sums_total[which.max(sums_total[, "meanAUC"]), ]$meanAUC
 opt_LL = sums_total[which.max(sums_total[, "sumlogLik"]), ]$meanAUC
 cat("AUC difference between AUC and LL optimum =", round(opt_AUC-opt_LL, 3), "\n") 
 
+# Number of species considered
+cat("number of species =", unique(sums_total$nvalues))
+
 sink()
 
 
+# Clean
 
+rm(list = ls()[!(grepl("site", ls()) | grepl("path", ls()))])
 
 
 

@@ -37,13 +37,17 @@ if (!exists("path_output")) path_output = "data_prep/output/"
 if (!exists("path_mortality")) path_mortality = "out/mortality_models/"
 
 
+# create folder for output
+dir.create(path_mortality)
+
+
 
 
 
 # Define sites ------------------------------------------------------------
 
 
-# loop through all sites where tree or stem data is available
+# sites where tree or stem data is available
 sites = unique(unlist(lapply(strsplit(c(list.files(paste0(path_input, "data_tree/"))
                                         , list.files(paste0(path_input, "data_stem/"))), 
                                       "_"), "[[", 1)))
@@ -68,7 +72,7 @@ for (run in runs) {
   
   # chose n cores
   ncpu <- detectCores()-1
-  ncpu <- ifelse(ncpu > 10, length(decay_def), ncpu)
+  ncpu <- ifelse(ncpu > 10, 3*length(decay_def), ncpu)
   
   
   # settings
@@ -101,7 +105,7 @@ for (run in runs) {
   stopCluster(cl)
   
   
-  # Load and prepare results
+  # Combine results
   coefs_combined = data.frame()
   sums_combined = data.frame()
   
@@ -114,6 +118,9 @@ for (run in runs) {
       coefs_global = data.frame()
       sums_global = data.frame()
       
+      # vector of output object names
+      output_objects = gsub("_global", "", ls()[grepl("_global", ls())])
+      
       for (site in sites) {
         
         # load output objects
@@ -121,16 +128,15 @@ for (run in runs) {
                     , sprintf("%02d", decay_con), "_", sprintf("%02d", decay_tot), "/"
                     , site, "_mortality.Rdata"))
         
-        # vector of output object names
-        output_objects = gsub("_global", "", ls()[grepl("_global", ls())])
-        
-        # add meta information (species and site level)
-        source("code/mortality_models/source_add_meta_information.R", local = T)
-        
-        rm(list = c("temp", output_objects))
-        
+        # combine output objects
+        for (i in output_objects) {
+          temp = get(i)
+          temp$site = site
+          assign(paste0(i, "_global"), rbind(get(paste0(i, "_global")), temp)) 
+        }
       }
       
+      # combine different decay settings
       for (i in output_objects) {
         temp = get(paste0(i, "_global"))
         temp$decay_con = decay_con
@@ -206,10 +212,7 @@ sink()
 
 
 
-
-
-# Load and prepare results
-
+# Combine results
 
 # objects for global results
 coefs_global = data.frame()
@@ -220,34 +223,29 @@ rAME_global = data.frame()
 rAMEsamples_global = data.frame()
 nsp_global = data.frame()
 
+# vector of output object names
+output_objects = gsub("_global", "", ls()[grepl("_global", ls())])
 
 for (site in sites) {
   
   # load output objects
   load(paste0(path_mortality, run, "/", site, "_mortality.Rdata"))
   
-  # vector of output object names
-  output_objects = gsub("_global", "", ls()[grepl("_global", ls())])
-  
-  # add meta information (species and site level)
-  source("code/mortality_models/source_add_meta_information.R")
-  
-  rm(list = c("temp", output_objects))
+  # combine output objects
+  for (i in output_objects) {
+    temp = get(i)
+    temp$site = site
+    assign(paste0(i, "_global"), rbind(get(paste0(i, "_global")), temp)) 
+  }
 }
 
 
-# object with sites ordered by absolute latitude
-AME_global %>% 
-  group_by(site) %>% 
-  summarise(latitude = unique(latitude)) %>% 
-  arrange(abs(latitude)) -> sites_ordered
-
-
 # Save result
-save(list = ls()[grepl("_global", ls()) | ls() == "sites_ordered"]
+save(list = ls()[grepl("_global", ls())]
      , file = paste0(path_mortality, run, "/global_mortality.Rdata"))
 
 
+rm(list = ls()[!(grepl("site", ls()) | grepl("path", ls()))])
 
 
 
@@ -282,7 +280,7 @@ for (run in runs) {
   
   
   
-  # Load and prepare results
+  # Combine results
   
   # objects for global results
   coefs_global = data.frame()
@@ -293,34 +291,29 @@ for (run in runs) {
   rAMEsamples_global = data.frame()
   nsp_global = data.frame()
   
+  # vector of output object names
+  output_objects = gsub("_global", "", ls()[grepl("_global", ls())])
+  
   for (site in sites) {
     
     # load output objects
     load(paste0(path_mortality, run, "/", site, "_mortality.Rdata"))
     
-    # vector of output object names
-    output_objects = gsub("_global", "", ls()[grepl("_global", ls())])
-    
-    # add meta information (species and site level)
-    source("code/mortality_models/source_add_meta_information.R")
-    
-    rm(list = c("temp", output_objects))
+    # combine output objects
+    for (i in output_objects) {
+      temp = get(i)
+      temp$site = site
+      assign(paste0(i, "_global"), rbind(get(paste0(i, "_global")), temp)) 
+    }
   }
   
-  
-  # object with sites ordered by absolute latitude
-  AME_global %>% 
-    group_by(site) %>% 
-    summarise(latitude = unique(latitude)) %>% 
-    arrange(abs(latitude)) -> sites_ordered
-  
-  
   # Save result
-  save(list = ls()[grepl("_global", ls()) | ls() == "sites_ordered"]
+  save(list = ls()[grepl("_global", ls())]
        , file = paste0(path_mortality, run, "/global_mortality.Rdata"))
   
 }
 
+rm(list = ls()[!(grepl("site", ls()) | grepl("path", ls()))])
 
 
 
