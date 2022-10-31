@@ -9,4 +9,6 @@ It includes the following steps, which can be completed by executing the respect
 
 Most of these scripts source other lower level scripts for additional functions and analysis steps, which can be found in the respective [code folder](/code/).
 
-The results that are produced during each step of the analysis are stored either in the folder [data_prep](/data_prep) or in the folder [out](/out) (mortality models, meta-regressions,d and tables).
+The results that are produced during each step of the analysis are stored either in the folder [data_prep](/data_prep) or in the folder [out](/out) (mortality models, meta-regressions, and tables). 
+
+Many steps (e.g. meta-regressions and related tables and plots) are repeated for different definitions of CNDD, i.e. AME and rAME calculated at observed conspecific densities (equilibrium) and AME and rAME calculated at low conspecific densities, which then appear in this order in the respective output. 
