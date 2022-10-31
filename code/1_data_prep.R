@@ -27,11 +27,31 @@ if (!exists("path_output")) path_output = "data_prep/output/"
 
 
 
+# Create output folders ---------------------------------------------------
+
+
+# create folder for output
+dir.create(path_output)
+
+for (out in c("data_1_metainfo"
+              , "data_3a_mortality"
+              , "data_3b_growth"
+              , "meta_abundances"
+              , "meta_clusters"
+              , "meta_growth"
+              , "meta_mortality"
+              , "meta_stature")) {
+  dir.create(paste0(path_output, out))
+}
+
+
+
+
 # Define sites ------------------------------------------------------------
 
 
 
-# loop through all sites where tree or stem data is available
+# sites where tree or stem data is available
 sites = unique(unlist(lapply(strsplit(c(list.files(paste0(path_input, "data_tree/"))
                                         , list.files(paste0(path_input, "data_stem/"))), 
                                       "_"), "[[", 1)))
