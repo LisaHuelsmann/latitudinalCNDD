@@ -3,7 +3,6 @@
 
 # Functions to analyze outputs
 
-library(metafor)
 
 
 
@@ -46,6 +45,56 @@ polyarea <- function(x, y, d=1) {
   }
   names(a) <- NULL
   return(a)
+}
+
+# coordinates for plots
+circular_coor = function(order, inner) {
+  
+  # settings
+  deg2rad <- function(deg) {(deg * pi) / (180)}
+  twist = 63
+  sizeMiddle = 0.7
+  sideMid = 3*(1-sizeMiddle) / 3.5
+  sideDis = (1-sizeMiddle)/3.7
+  
+  # object for coordinates
+  multiCoords = matrix(0, length(order) + 1, 4)
+  multiCoords[1,] =  mid = rep(c(0.5 - 0.5*sizeMiddle, 0.5 + 0.5*sizeMiddle), 2)
+  
+  # inner circle
+  angles_inner = seq(0+twist+10,360+twist+10,length.out = inner+1)[1:inner]
+  for(p in 2:(inner+1)){
+    pp = p - 1
+    multiCoords[p,1] = cos(deg2rad(angles_inner[pp])) * (sideMid + 0) + 0.5 - sideDis
+    multiCoords[p,2] = multiCoords[p,1] + 2*sideDis
+    if(multiCoords[p,1] > multiCoords[p,2]) multiCoords[p,] = multiCoords[p,c(2,1,3,4)]
+    multiCoords[p,3] = sin(deg2rad(angles_inner[pp])) * (sideMid + 0) + 0.5 -sideDis
+    multiCoords[p,4] = multiCoords[p,3] + 2*sideDis
+    if( multiCoords[p,4] > 1) multiCoords[p,4] = 1
+  }
+  
+  # outer circle
+  angles_outer = seq(0+twist,360+twist,length.out = length(order)-inner+1)[1:(length(order) - inner)]
+  for(p in (inner+2):(length(order)+1)){
+    pp = p - (inner+1)
+    multiCoords[p,1] = cos(deg2rad(angles_outer[pp])) * (sideMid + 0.16) + 0.5 - sideDis
+    multiCoords[p,2] = multiCoords[p,1] + 2*sideDis
+    if(multiCoords[p,1] > multiCoords[p,2]) multiCoords[p,] = multiCoords[p,c(2,1,3,4)]
+    multiCoords[p,3] = sin(deg2rad(angles_outer[pp])) * (sideMid + 0.16) + 0.5 -sideDis
+    multiCoords[p,4] = multiCoords[p,3] + 2*sideDis
+    if( multiCoords[p,4] > 1) multiCoords[p,4] = 1
+  }
+  
+  # bring in circular order
+  multiCoords = multiCoords[order(c(angles_inner, angles_outer))+1, ]
+  
+  # 
+  # plot.new()
+  # for(site in order) {
+  #   par(fig = multiCoords[which(order == site)+1,], new = T)
+  #   par(mar = c(1, 1, 1, 1))
+  #   hist(rnorm(100), main = "")
+  # }
 }
 
 
@@ -118,34 +167,27 @@ rma_convergence = function(mod) {
 # plot estimated effects against abundance
 plot_estimates_vsAbundance = function(data, type, order, names = NULL
                                       , trans, backtrans
-                                      , returnXY = F, x = 0.5, y = 0.5
+                                      , multiCoords
                                       , cols = F, color.axes = "black"
-                                      , cex.text = 0.6
+                                      , cex.text = 0.4
                                       , markRare = F) {
   
   # limits
   xlim = log(c(min(data$abundance), max(data$abundance)))
-  # if(type == "rAME") {
-  ylim = quantile(data$estimate, probs = c(0.2, 0.8))
-  yspacing = 2
-  # } else {
-  # ylim = quantile(data$estimate, probs = c(0.02, 0.98))
-  # yspacing = 5
-  # }
+  ylim = quantile(data$estimate, probs = c(0.15, ifelse(type == "rAME", 0.8, 0.8)))
   
-  yseq = floor(100*backtrans(ylim))/100       # backtransformed 
-  yseq = c(yseq[c(1, 1)], 0,  yseq[c(2, 2)])
+  # y sequence
+  digitrounding = ifelse(type == "rAME", 100, 1000)
+  yspacing = 2
+  yseq = floor(digitrounding*backtrans(ylim))/digitrounding       # backtransformed 
+  yseq = c(yseq[rep(1, yspacing)], 0,  yseq[rep(2, yspacing)])
   yseq = yseq/c(1, yspacing, 1, yspacing, 1)
   
   
-  # for xy in ndc
-  if (returnXY) {
-    x.temp = vector()
-    y.temp = vector()
-  } 
   
   # use names from order when not provided in names
   if (is.null(names)) names = order
+  
   
   
   for (site in order) {
@@ -178,7 +220,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
       mod = check$mod
       reliable = check$reliable
       
-        
+      
       
       # generate predictions when model okay
       if (reliable) {
@@ -191,6 +233,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
       significant = dat_meta$significant
       
       # plot CNDD against abundance
+      par(fig = multiCoords[which(order == site),], new = T)
       plot(-100, -100
            , xlim = xlim
            , ylim = ylim
@@ -198,37 +241,38 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
            , ylab = ""
            , xaxt = "n"
            , yaxt = "n"
-           , bty='l'
+           , bty='n'
       )
       
+      # white background
+      rect(par("usr")[1], par("usr")[3],
+           par("usr")[2], par("usr")[4],
+           col = "white", border = NA)
+      
       # axes
-      abline(h = 0, col = "grey", lwd = 0.8)
-      axis(1, log(c(0.1, 1, 10, 100, 1000)), labels = NA
-           , tck = -0.025, col = color.axes, lwd = 0.8, lwd.ticks = 0.8)
-      axis(2, trans(yseq), labels = NA, tck = -0.025, col = color.axes, lwd = 0.8, lwd.ticks = 0.8)
+      abline(h = 0, col = "lightgrey", lwd = 0.6, lty = 2)
+      axis(1, log(c(0.01, 0.1, 1, 10, 100, 1000, 10000)), labels = NA
+           , tck = -0.025, col = color.axes, lwd = 0.6, lwd.ticks = 0.6)
+      axis(2, trans(yseq), labels = NA
+           , tck = -0.025, col = color.axes, lwd = 0.6, lwd.ticks = 0.6)
       
       # axes labels
-      if (xlabels[i]) {
-        axis(1, log(c(0.1, 10, 1000)), labels = c(0.1, 10, 1000), tick = F,
-             cex.axis = cex.text, lwd = 0, line = -0.8, col.axis = color.axes)
-      }
-      if (ylabels[i]) {
-        axis(2, trans(yseq), labels = 100*yseq, las = 1, lwd = 0
-             , cex.axis = cex.text, line = -0.6, col.axis = color.axes)  
-      }
+      axis(1, log(c(0.1, 10, 1000)), labels = c(0.1, 10, 1000), tick = F,
+           cex.axis = cex.text, lwd = 0, line = -1.4, col.axis = color.axes)
+      axis(2, trans(yseq), labels = 100*yseq, las = 1, lwd = 0
+           , cex.axis = cex.text, line = -0.8, col.axis = color.axes)  
+      
       
       # add points of individual estimates
       if (markRare) pch = ifelse(grepl("Rare", dat_meta$sp), 18, 16)
       if (!markRare) pch = 16
       points(log(dat_meta$abundance), dat_meta$yi
              , pch = pch
-             , cex = 0.5*(scale(1/(dat_meta$vi)^(1/10)) + min(1/(dat_meta$vi)^(1/10)))
+             , cex = 0.18*(scale(1/(dat_meta$vi)^(1/10)) + min(1/(dat_meta$vi)^(1/10)))
              , col= rgb(0, 0, 0, 0.4*significant + 0.2))
       
       # add polygon and line for model fit
       if (reliable) {
-        # confarea = polyarea(c(xs, rev(xs)), c(sav$ci.lb, rev(sav$ci.ub)))
-        # plotarea = polyarea(c(xlim, rev(xlim)), c(rep(ylim, each = 2)))
         confheight = mean(sav$ci.ub-sav$ci.lb)
         plotheight = diff(ylim)
         
@@ -238,7 +282,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
         polygon(c(xs, rev(xs)), c(sav$ci.lb, rev(sav$ci.ub))
                 , col = add.alpha(cols[i], alpha)
                 , border = NA)
-        lines(xs, sav$pred, lwd=1.2)
+        lines(xs, sav$pred, lwd=1)
         
         # p-value
         text(min(xs), sav$ci.ub[1]+0.02*ylim[2]
@@ -255,28 +299,19 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
         dat_outside = sums_global$nobs[sums_global$site == site & sums_global$sp %in% dat_meta$sp[outside]]
         dat_outside = sum(dat_outside)/sum(sums_global$nobs[sums_global$site == site])
         text(xlim[1], ylim[1]+0.02*ylim[2], paste0(round(100*dat_outside, 0), "% of data outside")
-             , cex = cex.text, adj = c(0, 0))
+             , cex = cex.text, adj = c(0, 0), col = "grey")
+      } else {
+        text(xlim[1], ylim[1]+0.02*ylim[2], "no data outside"
+             , cex = cex.text, adj = c(0, 0), col = "grey")
       }
-      text(xlim[1], ylim[2]-0.02*ylim[2]
+      par(xpd = NA, new = T)
+      text(xlim[1]+0.45*xlim[1], ylim[2]-0.25*ylim[2]
            , gsub('(.{1,30})(\\s|$)', '\\1\n', names[i])
-           , cex = cex.text, adj = c(0, 1), font = 2)
-    }
-    
-    
-    # save xy in ndc
-    if (returnXY) {
-      x.temp = c(x.temp, grconvertX(x[i], from = "nfc", to = "ndc"))
-      y.temp = c(y.temp, grconvertY(y[i], from = "nfc", to = "ndc"))
+           , cex = cex.text, adj = c(0, 0), font = 2, lheight=.6)
+      par(xpd = F, new = T)
     }
   }
-  
-  # return xy in ndc
-  if (returnXY) {
-    return(list(x.temp = x.temp, y.temp = y.temp))
-  }
-  
 }
-
 
 
 
@@ -523,7 +558,7 @@ plot_latitude = function(preds
   }
   
   # labels
-  mtext(preds[[run]][[1]]$label, 3, 1, outer = T)
+  # mtext(preds[[run]][[1]]$label, 3, 1, outer = T)
   
   if (labelsx == "outer") {
     mtext("absolute latitude (°)", 1, 1, outer = T, cex = 2/3)
@@ -557,7 +592,7 @@ plot_abundance = function(preds
   if (is.null(xlim)) xlim = range(unlist(lapply(preds, function(x) x[[1]]$xlim)))
   if (is.null(ylim)) ylim = range(unlist(lapply(preds, function(x) x[[1]]$ylim)))
   
-
+  
   for (i in 1:length(latitudes)) {
     
     # plotting
@@ -567,14 +602,14 @@ plot_abundance = function(preds
          , yaxt = ifelse(latitudes[i] == latitudes[1], "s", "n"), xaxt = "n"
          , bty='l'
     )
-
+    
     # add label for panel if needed
     if (i == 1 & !is.null(panel)) text(grconvertX(0.05, from = "ndc")
                                        , grconvertY(0.48, from = "ndc")
                                        , labels = panel
                                        , cex = 3/2
                                        , xpd=NA)
-
+    
     if (is.null(latitude_names)) {
       graphics::text(transAbund(xlim, ref_abund)[2], 0.9*ylim[2], paste0("Latitude\n", latitudes[i], "°"), 
                      adj = 1, pos = 2)

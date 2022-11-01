@@ -420,8 +420,7 @@ sums$AUC = unlist(aucs)
 
 interval = 1
 change = list(equilibrium = data.frame(con_BA = "paste('+', additive)")
-              , invasion = data.frame(con_BA = "c(0, additive)")
-              , limiting = data.frame(con_BA = "c(paste0(max(x$model[, i])-additive), paste0(max(x$model[, i])))"))
+              , invasion = data.frame(con_BA = "c(0, additive)"))
 iter = 500
 
 
