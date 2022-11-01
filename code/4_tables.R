@@ -9,8 +9,9 @@ library(flextable)
 library(officer)
 
 
+# create folder for output
+dir.create(path_tables)
 
-dir.create(paste0(path_tables, run))
 
 
 
@@ -18,16 +19,19 @@ dir.create(paste0(path_tables, run))
 
 
 # select run
-run = "zf"
+run = "main"
+
+# create folder
+dir.create(paste0(path_tables, run))
 
 # mortality modeling results
-load(paste0("out/mortality_models/", run, "/global_mortality.Rdata"))
+load(paste0(path_mortality, run, "/global_mortality.Rdata"))
 
 # sites
 sites = sort(unique(sums_global$site))
 
 # auxiliary information
-Site_table = readxl::read_xlsx("data_prep/plot_sites_information.xlsx", sheet = 1)
+Site_table = readxl::read_xlsx(paste0(path_input, "global_metainfo/plot_sites_information.xlsx"), sheet = 1)
 Site_table = Site_table %>%
   dplyr::filter(ID %in% sites)
 
@@ -43,12 +47,12 @@ Site_table = Site_table %>%
 
 # Variables: 
 # Site name, latitude, longitude, mean temperature, mean precipitation, 
-# plot size, number of censuses, census years, tree or stem level
+# plot size, number of censuses, census years
+
 
 # generated based on Site_table
 # with additional info from 
 #   _tree_1_metainfo.Rdata (censuses)
-#  datasets_info.xlsx (tree or stem level)
 
 # select columns
 ext_data_table_1 = Site_table[, c("site", "lat", "long", "mat", "map", "size_ha", "ID")]
@@ -66,17 +70,12 @@ ext_data_table_1$long = format(round(ext_data_table_1$long, digits=2), nsmall = 
 ext_data_table_1$n_censuses = NA
 ext_data_table_1$census_years = NA
 for (site in sites) {
-  load(paste0("data_prep/data_1_metainfo/", site, "_tree_1_metainfo.Rdata"))
+  load(paste0(path_output, "data_1_metainfo/", site, "_tree_1_metainfo.Rdata"))
   ext_data_table_1$n_censuses[ext_data_table_1$ID == site] = length(tree)
   get_year = function(x) names(sort(table(format(x$date, format="%Y")), decreasing = T))[1] # most common name per census
   ext_data_table_1$census_years[ext_data_table_1$ID == site] = paste(unlist(lapply(tree, get_year)), collapse = ", ")
 }
 
-# add level
-ext_data_table_1$level = "tree"
-datasets_info = readxl::read_xlsx("../ForestGEO_datacleaning@git/global_metainfo/datasets_info.xlsx")
-stem_level = datasets_info$ID[which(datasets_info$tree.level=="no")]
-ext_data_table_1$level[ext_data_table_1$ID %in% stem_level] = "stem"
 ext_data_table_1 = ext_data_table_1 %>% 
   select(-ID)
 
@@ -104,7 +103,10 @@ doc_1 <- read_docx(path = template)
 doc_1 %>%
   body_add_flextable(var) -> my_doc
 
-print(my_doc, target = paste0("out/tables/extended_data_table_1_", run, ".docx")) %>% invisible()
+print(my_doc, target = paste0(path_tables, run, "/extended_data_table_1.docx")) %>% invisible()
+
+
+
 
 
 
@@ -122,7 +124,7 @@ print(my_doc, target = paste0("out/tables/extended_data_table_1_", run, ".docx")
 # add number of recorded trees from _tree_1_metainfo.Rdata (full list of tree censuses)
 nsp_global$n_trees = NA
 for (site in sites) {
-  load(paste0("data_prep/data_1_metainfo/", site, "_tree_1_metainfo.Rdata"))
+  load(paste0(path_output, "data_1_metainfo/", site, "_tree_1_metainfo.Rdata"))
   nsp_global$n_trees[nsp_global$site == site] = nrow(tree[[1]])     # take first census but all have the same number of entries
 }
 
@@ -176,7 +178,7 @@ doc_2 <- read_docx(path = template)
 doc_2 %>%
   body_add_flextable(var) -> my_doc
 
-print(my_doc, target = paste0("out/tables/extended_data_table_2_", run, ".docx")) %>% invisible()
+print(my_doc, target = paste0(path_tables, run, "/extended_data_table_2.docx")) %>% invisible()
 
 
 
