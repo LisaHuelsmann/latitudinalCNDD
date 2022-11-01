@@ -32,6 +32,10 @@ if (!exists("path_mortality")) path_mortality = "out/mortality_models/"
 if (!exists("path_meta")) path_meta = "out/meta_models/"
 
 
+# create folder for output
+dir.create(path_meta)
+
+
 
 
 # Settings ----------------------------------------------------------------
@@ -45,7 +49,7 @@ run_names = c("Original dataset",
 
 # number cpu
 ncpu = length(runs)
-ncpu_meta = 6
+ncpu_meta = 15
 
 
 
@@ -60,15 +64,16 @@ analyze_run = function(run, ncpu_meta, paths) {
   source("code/meta_models/functions_meta_models.R", local = T)
   
   # analyze results
-  source(paste0("code/meta_models/source_meta_models.R"), local = T) # must be local to use run object
+  source("code/meta_models/source_meta_models.R", local = T) # must be local to use run object
   
   # Session info
-  sink(paste0(path_meta, "/", run,  "/sessionInfo.txt"))
+  sink(paste0(paths$path_meta, "/", run,  "/sessionInfo.txt"))
   sessionInfo()
   sink()
   
 }
-result <- pblapply(cl = cl, runs, analyze_run, ncpu_meta = ncpu_meta,
+result <- pblapply(cl = cl, runs, analyze_run, 
+                   ncpu_meta = ncpu_meta,
                    paths = list(path_output = path_output, 
                                 path_input = path_input, 
                                 path_mortality = path_mortality,
@@ -119,7 +124,7 @@ for (i in 1:length(res[[1]])) {
   
   # plotting
   layout(matrix(c(1, 1, 1, 2, 3, 4), ncol = 3, byrow = T))
-  par(las = 1, oma = c(3, 4, 3, 0), mar = c(2, 2, 3, 1))
+  par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
   
   # only latitude model
   plot_latitude(preds_lat, names = run_names
