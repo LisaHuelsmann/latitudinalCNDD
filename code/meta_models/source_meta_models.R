@@ -213,12 +213,20 @@ for (i in c("log_mortality", "log1p_growth")) {
                 , xaxt = "n"
                 )
   axis(1, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
-  m = mgcv::gam(M[, i] ~ s(M$log_abundance))
-  pred = cbind(x = sort(M$log_abundance)
-               , as.data.frame(mgcv::predict.gam(m, se.fit = T))[order(M$log_abundance), ])
-  lines(pred[, c("x", "fit")], col = "red", lwd = 2)
-  polygon(c(pred$x, rev(pred$x)), c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit)), col = rgb(1, 0.1, 0.1, 0.3), border = NA)
+  
+  for (qu in c(0.25, 0.5, 0.75)) {
+    form = formula(paste(i, "~ s(log_abundance)"))
+    m = qgam::qgam(form, data = M, qu = qu)
+    
+    pred = cbind(x = sort(M$log_abundance)
+                 , as.data.frame(mgcv::predict.gam(m, se.fit = T))[order(M$log_abundance), ])
+    lines(pred[, c("x", "fit")], col = "red", lwd = 1.5)
+    polygon(c(pred$x, rev(pred$x))
+            , c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit))
+            , col = rgb(1, 0.1, 0.1, 0.2), border = NA)  
+  }
 }
+
 text(grconvertX(0.05, from = "ndc")
      , grconvertY(0.95, from = "ndc")
      , labels = "a"
@@ -238,7 +246,21 @@ smoothScatter(M$abs_latitude, M$log_abundance
               , yaxt = "n"
               )
 axis(2, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
-m = try(mgcv::gam(M$log_abundance ~ s(M$abs_latitude, k = 5)), silent = T)
+
+
+for (qu in c(0.25, 0.5, 0.75)) {
+  
+  m = qgam::qgam(log_abundance ~ abs_latitude, data = M, qu = qu)
+  
+  x = seq(min(M$abs_latitude), max(M$abs_latitude), 1)
+  pred = mgcv::predict.gam(m, se.fit = T, newdata = list(abs_latitude = x))
+  
+  lines(x, pred$fit, col = "red", lwd = 1.5)
+  polygon(c(x, rev(x))
+          , c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit))
+          , col = rgb(1, 0.1, 0.1, 0.2), border = NA)
+}
+
 text(grconvertX(0.05, from = "ndc")
      , grconvertY(0.45, from = "ndc")
      , labels = "c"
@@ -310,6 +332,7 @@ pdf(paste0(path_meta, run, "/Fig1.pdf")
     , width = 183/25.4)
 
 
+site_models = list()
 for (term in terms) {
   
   for (change in changes) {
@@ -358,7 +381,6 @@ for (term in terms) {
       
       # add forest site coordinates
       plot(st_geometry(sites_sf), add = T, pch = 16, col = cols_order, cex = 0.6)
-      # text(st_coordinates(sites_sf), sites_sf$Abbreviation)
       
       # plot estimates versus abundance
       par(mar = c(1, 1.2, 1, 0.1))
@@ -367,7 +389,11 @@ for (term in terms) {
                                         , backtrans = get(paste0("backtrans_", type))
                                         , multiCoords = multiCoords
                                         , cols = cols_order, color.axes = "black" # "grey30"
-                                        , markRare = T)
+                                        , markRare = T
+                                        , returnMod = T
+                                        )
+      temp = temp[order(names(temp))]
+      site_models[[paste(type, change)]] = as.data.frame(bind_rows(lapply(temp, function(x) try(broom::tidy(x))), .id = "site"))
       
     }
   }
@@ -376,8 +402,10 @@ for (term in terms) {
 dev.off()
 
 
+save(site_models
+     , file = paste0(path_meta, run, "/sitemodels.Rdata"))
 
-
+rm(site_models)
 
 
 
@@ -941,12 +969,12 @@ for (i in settings$names) {
   my_list <- lapply(res[[run]], function(x) {
     
     # digits depending on effect size
-    digits = ceiling(log10(1/min(abs(1*coef(x[[i]])))))
+    digits = ceiling(log10(1/min(abs(1*coef(x[[i]]))))) + 1
     
     # collect model summary
     tbl_regression(x[[i]]
                    , estimate_fun = ~style_sigfig(., digits = digits)
-                   , pvalue_fun = function(x) scales::pvalue(x, accuracy = 0.01, add_p = F)) %>%
+                   , pvalue_fun = function(x) scales::pvalue(x, accuracy = 0.00001, add_p = F)) %>%
       bold_p() %>%
       # bold_labels() %>%
       as_flex_table() %>%
