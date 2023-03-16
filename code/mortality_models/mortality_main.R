@@ -252,7 +252,8 @@ model_convergence = function(model) {
 # Fit models --------------------------------------------------------------
 
 
-res_mod = list()
+res_mod = list()      # main model fits
+res_red_mod = list()  # reduced model fits for Pseudo R2
 
 
 # Fit models for individual species
@@ -261,7 +262,7 @@ for (sp in nsp$sp[nsp$trymodel]) {
   # select data for individual species
   dat_sp = dat_mort[dat_mort$sp == sp, ]
   
-  # model fit
+  # model fit and reduced fit for Pseudo R2
   mod = model_fit(data = dat_sp, speciesinfo = nsp[nsp$sp == sp, ])
   mod_red = model_fit(data = dat_sp, speciesinfo = nsp[nsp$sp == sp, ], reduced = T)
   
@@ -274,7 +275,7 @@ for (sp in nsp$sp[nsp$trymodel]) {
     nsp$rare[nsp$sp == sp] = T  
   } else {
     res_mod[[sp]] = res
-    (mod_red$deviance- mod$deviance)/mod_red$deviance
+    res_red_mod[[sp]] = res_red
   }
 }
 
@@ -324,14 +325,16 @@ for (sp in unique(nsp_rare$sp[nsp_rare$trymodel])) {
   
   # model fit
   mod = model_fit(data = dat_sp, speciesinfo = nsp_rare[nsp_rare$sp == sp, ])
-  
+  mod_red = model_fit(data = dat_sp, speciesinfo = nsp_rare[nsp_rare$sp == sp, ], reduced = T)  
   
   # check model success
   res = model_convergence(model = mod)
+  res_red = model_convergence(model = mod_red)
   
   # save result
   if (!is.character(res)) {
     res_mod[[sp]] = res
+    res_red_mod[[sp]] = res_red
   }
 }
 
@@ -353,12 +356,18 @@ sums = lapply(res_mod, broom::glance)
 sums = Map(cbind, sums, sp = names(sums))
 sums = do.call(rbind, sums)
 
+
 # AUC
 aucs = lapply(res_mod, function(x) {
   roc <- performance::performance_roc(x, new_data = x$model)
   bayestestR::area_under_curve(roc$Spec, roc$Sens)
 })
 sums$AUC = unlist(aucs)
+
+
+# Pseudo R2
+sums$pseudoR2 = 1 - (unlist(lapply(res_mod, function(x) x$deviance)) / unlist(lapply(res_red_mod, function(x) x$deviance)))
+
 
 
 
