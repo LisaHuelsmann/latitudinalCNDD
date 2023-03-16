@@ -159,7 +159,7 @@ table(nsp$trymodel)
 # Function for fitting models ---------------------------------------------
 
 
-model_fit = function(data, speciesinfo) {
+model_fit = function(data, speciesinfo, reduced = F) {
   
   # create new factor with correct factor levels per species (otherwise problem with margins)
   data$census = factor(data$census)
@@ -167,17 +167,21 @@ model_fit = function(data, speciesinfo) {
   
   # create model formula
   term_c = ifelse(length(unique(data$census)) > 1, " + s(census, bs = 're')", "") 
-  form =  as.formula(paste0("mort_next ~ s(dbh, k = k1) + s(all_BA, k = k2)  + s(con_BA, k = k3)"
-                            , term_c))
+  
+  if (reduced) {
+    form =  as.formula(paste0("mort_next ~ s(dbh, k = k1) + s(all_BA, k = k2)"
+                              , term_c))
+  } else {
+    form =  as.formula(paste0("mort_next ~ s(dbh, k = k1) + s(all_BA, k = k2)  + s(con_BA, k = k3)"
+                              , term_c))
+  }
+  
   
   # chose penalty
   # set to default 10 (the same as -1)
-  k1 = k2 = 10 
+  k1 = k2 = k3 = 10 
   if (k1 > speciesinfo$unique_dbh) k1 = speciesinfo$unique_dbh - 2
   if (k2 > speciesinfo$unique_all_BA) k2 = speciesinfo$unique_all_BA - 2
-  
-  # less flexible k for conspecific density
-  k3 = 10
   if (k3 > speciesinfo$unique_con_BA) k3 = speciesinfo$unique_con_BA - 2
   
   
@@ -287,15 +291,18 @@ for (sp in nsp$sp[nsp$trymodel]) {
   
   # model fit
   mod = model_fit(data = dat_sp, speciesinfo = nsp[nsp$sp == sp, ])
+  mod_red = model_fit(data = dat_sp, speciesinfo = nsp[nsp$sp == sp, ], reduced = T)
   
   # check model success
   res = model_convergence(model = mod)
+  res_red = model_convergence(model = mod_red)
   
   # save result
   if (is.character(res)) {
     nsp$rare[nsp$sp == sp] = T  
   } else {
     res_mod[[sp]] = res
+    (mod_red$deviance- mod$deviance)/mod_red$deviance
   }
 }
 
