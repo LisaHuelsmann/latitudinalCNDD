@@ -170,7 +170,9 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
                                       , multiCoords
                                       , cols = F, color.axes = "black"
                                       , cex.text = 0.4
-                                      , markRare = F) {
+                                      , markRare = F
+                                      , returnMod = F
+                                      ) {
   
   # limits
   xlim = log(c(min(data$abundance), max(data$abundance)))
@@ -188,7 +190,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
   # use names from order when not provided in names
   if (is.null(names)) names = order
   
-  
+  if (returnMod) models = list()
   
   for (site in order) {
     
@@ -222,11 +224,14 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
       
       
       
-      # generate predictions when model okay
+      # generate predictions and save model when model okay
       if (reliable) {
         npred = 500
         xs <- seq(min(log(dat_meta$abundance)), max(log(dat_meta$abundance)), length = npred)
         sav <- predict(mod, newmods = t(xs))
+        
+        # save model if returnMod
+        if (returnMod) models[[site]] = mod
       }
       
       # significance
@@ -287,7 +292,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
         # p-value
         text(min(xs), sav$ci.ub[1]+0.02*ylim[2]
              , scales::pvalue(summary(mod)$pval[2],
-                              accuracy = 0.01, # Number to round to
+                              accuracy = 0.00001, # Number to round to
                               add_p = TRUE)
              , cex = cex.text, adj = c(0, 0))
         
@@ -311,6 +316,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
       par(xpd = F, new = T)
     }
   }
+  if (returnMod) return(models)
 }
 
 
@@ -374,7 +380,7 @@ get_predictions_latitude = function(x
         p_value = refit_model$pval[rownames(refit_model$b)=="tLatitude"]
       }
       p_value = scales::pvalue(p_value,
-                               accuracy = 0.01, # Number to round to
+                               accuracy = 0.00001, # Number to round to
                                add_p = TRUE)
     } else {
       p_value = NULL
@@ -440,7 +446,7 @@ get_predictions_abundance = function (x
         p_value = refit_model$pval[rownames(refit_model$b)=="tAbundance"]
       }
       p_value = scales::pvalue(p_value,
-                               accuracy = 0.01, # Number to round to
+                               accuracy = 0.00001, # Number to round to
                                add_p = TRUE)
     } else {
       p_value = NULL
