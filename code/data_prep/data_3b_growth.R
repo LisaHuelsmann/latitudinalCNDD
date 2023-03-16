@@ -26,8 +26,13 @@ tree = Map(cbind, tree, census = names(tree))
 
 
 
+# Settings ----------------------------------------------------------------
 
+# plot range from metainfo
+plotrange = plot$plotdimension
 
+# define max distance for buffer
+dist_def = 30
 
 
 
@@ -63,19 +68,19 @@ tree_growth = tree_growth[tree_growth$surv == 1
                       & !is.na(tree_growth$surv_next), ]
 
 
-# # 2) observations inside buffer
-# outside = tree_growth$gx < plotrange[1, 1]+max(dist_def) |
-#   tree_growth$gx > plotrange[1, 2]-max(dist_def) |
-#   tree_growth$gy < plotrange[2, 1]+max(dist_def) |
-#   tree_growth$gy > plotrange[2, 2]-max(dist_def)
-# 
-# # 2a) additional outside condition for Ituri 30m around x=200m
-# if (site %in% c("edo", "len")) {
-#   outside = outside |
-#     (tree_growth$gx < (200 + max(dist_def)) & 
-#        tree_growth$gy > (200 - max(dist_def)))
-# }
-# tree_growth = tree_growth[!outside, ]
+# 2) observations inside buffer
+outside = tree_growth$gx < plotrange[1, 1]+max(dist_def) |
+  tree_growth$gx > plotrange[1, 2]-max(dist_def) |
+  tree_growth$gy < plotrange[2, 1]+max(dist_def) |
+  tree_growth$gy > plotrange[2, 2]-max(dist_def)
+
+# 2a) additional outside condition for Ituri 30m around x=200m
+if (site %in% c("edo", "len")) {
+  outside = outside |
+    (tree_growth$gx < (200 + max(dist_def)) &
+       tree_growth$gy > (200 - max(dist_def)))
+}
+tree_growth = tree_growth[!outside, ]
 
 
 # 3) observations with dbh>10mm at t=0

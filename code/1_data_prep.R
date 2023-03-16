@@ -37,7 +37,6 @@ for (out in c("data_1_metainfo"
               , "data_3a_mortality"
               , "data_3b_growth"
               , "meta_abundances"
-              , "meta_clusters"
               , "meta_growth"
               , "meta_mortality"
               , "meta_stature")) {
@@ -89,7 +88,7 @@ for (site in sites) {
 
 
 # Add metainfo
-# for now, no competition added, also no buffer applied!!!
+# no buffer applied
 # Restructure for growth
 
 for (site in sites) {
@@ -107,6 +106,8 @@ for (site in sites) {
 
 
 # Prepare meta ------------------------------------------------------------
+
+# Calculates species-level summary statistics, that are saved in individual files 
 
 
 # Abundances
