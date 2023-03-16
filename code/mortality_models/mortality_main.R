@@ -380,7 +380,9 @@ sums$pseudoR2 = 1 - (unlist(lapply(res_mod, function(x) x$deviance)) / unlist(la
 
 interval = 1
 change = list(equilibrium = data.frame(con_BA = "paste('+', additive)")
-              , invasion = data.frame(con_BA = "c(0, additive)"))
+              , invasion = data.frame(con_BA = "c(0, additive)")
+              , iqr = data.frame(con_BA = "c(q1, q3)")
+              )
 iter = 500
 
 
@@ -396,6 +398,10 @@ AMEsamples = data.frame()
 for (i in names(predictors)[grepl("con_", names(predictors))]) { # for all predictors
   for (j in names(change)) {
     temp = lapply(res_mod, function(x){
+      if (j == "iqr") {
+        q1 = quantile(x$model$con_BA, probs = 0.25)
+        q3 = quantile(x$model$con_BA, probs = 0.75)
+      }
       get_AME(x
               , data = x$model
               , offset = interval
@@ -432,6 +438,10 @@ rAMEsamples = data.frame()
 for (i in names(predictors)[grepl("con_", names(predictors))]) { # for all predictors
   for (j in names(change)) {
     temp = lapply(res_mod, function(x){
+      if (j == "iqr") {
+        q1 = quantile(x$model$con_BA, probs = 0.25)
+        q3 = quantile(x$model$con_BA, probs = 0.75)
+      }
       get_AME(x
               , data = x$model
               , offset = interval
