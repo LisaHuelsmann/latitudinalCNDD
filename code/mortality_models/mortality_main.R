@@ -198,34 +198,6 @@ model_fit = function(data, speciesinfo, reduced = F) {
   
   return(mod)
   
-  # # Explore model
-  # summary(mod)
-  # plot(mod, pages = 1, scale = 0, scheme = 2)
-  # k.check(mod)
-  # 
-  # # with gratia
-  # draw(mod)
-  # draw(derivatives(mod))
-  # 
-  # # with gamViz
-  # vizmod <- getViz(mod)
-  # pl = plot(vizmod, nsim = 20) + l_ciLine() + l_fitLine() + l_simLine()
-  # print(pl, pages = 1)
-  # pl = plot(vizmod, nsim = 20) + l_fitDens() + l_simLine(colour = 1) + theme(legend.position="none")
-  # print(pl, pages = 1)
-  # 
-  # 
-  # # Residuals
-  # qq(vizmod, rep = 10, method = "auto", CI = "normal", showReps = TRUE,
-  #    a.replin = list(alpha = 0.1), discrete = TRUE)
-  # 
-  # vizmod <- getViz(mod, nsim = 30)
-  # gridPrint(check1D(vizmod, "dbh") + l_gridCheck1D(gridFun = sd, showReps = TRUE))
-  # gridPrint(check1D(vizmod, "all_BA") + l_gridCheck1D(gridFun = sd, showReps = TRUE))
-  # gridPrint(check1D(vizmod, "con_BA") + l_gridCheck1D(gridFun = sd, showReps = TRUE))
-  # # red intervals are a 95% posterior credible intervals for the residuals standard deviation, computed using the posterior simulations
-  # # the black points are the standard deviation of the observed binned residuals
-
 }
 
 
