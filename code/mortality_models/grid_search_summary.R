@@ -19,6 +19,7 @@ dir.create(paste0(path_mortality, "gridsearch_summary"))
 # NOTE:these must be based on the same data and particularly the same max distance
 
 
+
 ### for full exploration
 settings = data.frame(runs = c("gridsearchNexp",  "gridsearchNexpn", "gridsearchBAexp", "gridsearchBAexpn")
                       , decay_type = c("exp", "expn", "exp", "expn")
@@ -57,6 +58,9 @@ table(sums_all$site, sums_all$decay_type)
 table(sums_all$decay_tot, sums_all$term, sums_all$decay_type)
 table(sums_all$decay_con, sums_all$term, sums_all$decay_type)
 
+
+# Meta info sites
+Site_table = readxl::read_xlsx(paste0(path_input, "global_metainfo/plot_sites_information.xlsx"), sheet = 1)
 
 
 
@@ -208,7 +212,83 @@ cat("number of species =", unique(sums_total$nvalues))
 sink()
 
 
-# Clean
+
+
+# Species-specific optima -------------------------------------------------
+
+
+sums_all_mod %>% 
+  filter(!site_sp %in% incomplete) %>%
+  filter(run == opt$run) %>%  # only run that was optimal overall (i.e BA or N, exp or expn)
+  group_by(site_sp) %>% 
+  arrange(desc(logLik), .by_group=T) %>% 
+  slice(1) -> sums_species
+
+# add absolute latitude
+sums_species$abslatitude = abs(Site_table$lat[match(sums_species$site, Site_table$ID)])
+
+# add species abundances
+sums_species$abundance = NA
+for (site in unique(sums_species$site)) {
+  
+  load(paste0(path_output, "meta_abundances/", site, "_abundances.Rdata"))
+  
+  # add abundances per species (N)
+  sums_species$abundance[sums_species$site == site] = abundances$Nha[match(sums_species$sp[sums_species$site == site]
+                                                                            , abundances$sp)]  
+  
+}
+
+# plot latitudinal patterns in optimal decay_con
+pdf(paste0(path_mortality, "/gridsearch_summary/optLL_con_species.pdf")
+    , height = 4, width = 9)
+par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), las = 1)
+
+smoothScatter(sums_species$abslatitude, sums_species$decay_con
+              , xlab = "latitude (°)"
+              , ylab = expression(paste("optimal ", mu, " con"))
+)
+
+m = mgcv::gam(decay_con ~ s(abslatitude), data = sums_species)
+x = seq(0, 55, 1)
+pred = (mgcv::predict.gam(m, se.fit = T, newdata = list(abslatitude = x)))
+lines(x, pred$fit, col = "red", lwd = 2)
+polygon(c(x, rev(x)), c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit)), col = rgb(1, 0.1, 0.1, 0.3), border = NA)
+
+
+smoothScatter(log(sums_species$abundance), sums_species$decay_con
+              , xlab = "abundance (N/ha)"
+              , ylab = expression(paste("optimal ", mu, " con"))
+              , xaxt = "n"
+              )
+axis(1, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
+
+m = mgcv::gam(decay_con ~ s(log(abundance)), data = sums_species)
+x = seq(min(sums_species$abundance), max(sums_species$abundance), 1)
+pred = (mgcv::predict.gam(m, se.fit = T, newdata = list(abundance = x)))
+lines(log(x), pred$fit, col = "red", lwd = 1.5)
+polygon(c(log(x), rev(log(x)))
+        , c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit))
+        , col = rgb(1, 0.1, 0.1, 0.2), border = NA)
+
+text(grconvertX(0.05, from = "ndc")
+     , grconvertY(0.95, from = "ndc")
+     , labels = "a"
+     , cex = 3/2
+     , xpd=NA)
+text(grconvertX(0.5, from = "ndc")
+     , grconvertY(0.95, from = "ndc")
+     , labels = "b"
+     , cex = 3/2
+     , xpd=NA)
+
+dev.off()
+
+
+
+
+# Clean -------------------------------------------------------------------
+
 
 rm(list = ls()[!(grepl("site", ls()) | grepl("path", ls()))])
 
