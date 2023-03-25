@@ -31,14 +31,14 @@ for (i in names(paths)) assign(i, paths[i])
 # chose decay type
 decay_type = "exp"
 
-dec_fun <- function(sigma, distance, type) {  # define decay function explicitly
+dec_fun <- function(mu, distance, type) {  # define decay function explicitly
 
   if (type == "exp") {
-    return( exp(-(1/sigma)*distance) )  
+    return( exp(-(1/mu)*distance) )  
   }
   
   if (type == "expn") {
-    return( exp(-(1/(sigma^2))*(distance^2)) )  
+    return( exp(-(1/(mu^2))*(distance^2)) )  
   }
 }
 

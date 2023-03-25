@@ -54,7 +54,6 @@ varname <- matrix(unlist(setting), nrow = length(setting), byrow = T)
 varname <- apply(varname, 1, function(x) paste(x[1], "thresh", x[2], sep = "_"))
 
 # range of decay values that should be tested (only for largest distance at the moment)
-# sigma parameterization
 decay =  seq(1, 25, 1)
 
 # names for columns with exponential and exponential-normal decay
@@ -87,26 +86,26 @@ comp <- function(setting, df) {
   
 }
 
-dec <- function(sigma, df, type) {
+dec <- function(mu, df, type) {
   
   # adds a column with the scaling part for distance decay
   
   if (type == "exponential") {
     
     # exp(-beta*d)
-    # beta = 1/sigma
+    # beta = 1/mu
     
     # calculate new column for exp(-beta*distance)
-    return( exp(-(1/sigma)*df$d) )  
+    return( exp(-(1/mu)*df$d) )  
   }
   
   if (type == "exponential-normal") {
     
     # exp(-beta*d^2)
-    # beta = 1/(sigma^2)
+    # beta = 1/(mu^2)
     
     # calculate new column for exp(-beta*distance)
-    return( exp(-(1/(sigma^2))*(df$d^2)) )  
+    return( exp(-(1/(mu^2))*(df$d^2)) )  
   }
   
 }
