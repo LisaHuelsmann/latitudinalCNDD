@@ -122,24 +122,33 @@ print(my_doc, target = paste0(path_tables, run, "/extended_data_table_1.docx")) 
 #   rAME_global (rare species group convergence)
 
 # add number of recorded trees from _tree_1_metainfo.Rdata (full list of tree censuses)
-nsp_global$n_trees = NA
-for (site in sites) {
-  load(paste0(path_output, "data_1_metainfo/", site, "_tree_1_metainfo.Rdata"))
-  nsp_global$n_trees[nsp_global$site == site] = nrow(tree[[1]])     # take first census but all have the same number of entries
-}
+# nsp_global$n_trees = NA
+# for (site in sites) {
+#   load(paste0(path_output, "data_1_metainfo/", site, "_tree_1_metainfo.Rdata"))
+#   nsp_global$n_trees[nsp_global$site == site] = nrow(tree[[1]])     # take first census but all have the same number of entries
+# }
 
 
 
-# calculate different n
+# calculate various n
 nsp_global %>% 
   mutate(nobs = ndead + nsurv) %>% 
   group_by(site) %>% 
-  summarise(n_trees = unique(n_trees),
+  summarise(# n_trees = unique(n_trees),
             n_mortality_observations = sum(nobs),
             n_species = n(),
-            n_species_fitted_individually = sum(!rare),
+            perc_species_fitted_individually = round(100*sum(!rare)/n_species, 1),
             n_species_fitted_as_rare_trees = sum(rare_stature == "Rare_tree", na.rm = T),
-            n_species_fitted_as_rare_shrubs = sum(rare_stature == "Rare_shrub", na.rm = T)) -> ext_data_table_2
+            n_species_fitted_as_rare_shrubs = sum(rare_stature == "Rare_shrub", na.rm = T),
+            perc_mortality = round(100*sum(ndead)/sum(nobs), 1)) -> ext_data_table_2
+
+# global numbers (for text)
+nsp_global %>% 
+  mutate(nobs = ndead + nsurv) %>% 
+  summarise(n_mortality_observations = sum(nobs),
+            n_species = n(),
+            perc_species_fitted_individually = round(100-100*sum(!rare)/n_species, 1),
+            perc_mortality = round(100*sum(ndead)/sum(nobs), 1))
 
 
 # replace n_rare with 0 if model not converged
@@ -164,12 +173,13 @@ ext_data_table_2 %>%
   font(fontname = "Arial", part = "all") %>%
   fontsize(part = "all", size = 8) %>% 
   set_header_labels(site = "Site",
-                    n_trees = "N trees", 
-                    n_mortality_observations = "N mortality observations",
-                    n_species = "N species",
-                    n_species_fitted_individually = "N species fitted individually",
+                    # n_trees = "N trees on entire plot", 
+                    n_mortality_observations = "N status observations",
+                    n_species = "N species for mortality analyses",
+                    perc_species_fitted_individually = "% species fitted individually",
                     n_species_fitted_as_rare_trees = "N species fitted as rare trees",
-                    n_species_fitted_as_rare_shrubs = "N species fitted as rare shrubs") %>% 
+                    n_species_fitted_as_rare_shrubs = "N species fitted as rare shrubs",
+                    perc_mortality = "% dead status observations") %>% 
   theme_booktabs() -> var
 
 template <- system.file(package = "officer",
