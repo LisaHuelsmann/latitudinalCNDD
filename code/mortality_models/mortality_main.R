@@ -352,6 +352,8 @@ coefs = do.call(rbind, coefs)
 
 # Model summary via broom::glance() ---------------------------------------
 
+
+# df logLik AIC BIC deviance df.residuals nobs 
 sums = lapply(res_mod, broom::glance)
 sums = Map(cbind, sums, sp = names(sums))
 sums = do.call(rbind, sums)
