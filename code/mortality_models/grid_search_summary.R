@@ -217,15 +217,25 @@ sink()
 # Species-specific optima -------------------------------------------------
 
 
+# identify species-specific optima of logLik
+# species where logLik values were relatively similar for more than one decay combination were not considered
 sums_all_mod %>% 
-  filter(!site_sp %in% incomplete) %>%
-  filter(run == opt$run) %>%  # only run that was optimal overall (i.e BA or N, exp or expn)
-  group_by(site_sp) %>% 
-  arrange(desc(logLik), .by_group=T) %>% 
-  slice(1) -> sums_species
+    filter(!site_sp %in% incomplete) %>%
+    filter(run == opt$run) %>%  # only run that was optimal overall (i.e BA or N, exp or expn)
+    group_by(site_sp) %>% 
+    arrange(desc(logLik), .by_group=T) %>% 
+    mutate(range_logLik = diff(range(logLik)),
+           min_logLik = min(logLik),
+           round_logLik = plyr::round_any((logLik-min_logLik)/range_logLik, 0.02), # scale logLik to 0 to 1 and rounded
+           opt = order(logLik, decreasing = T)) %>% 
+    filter(round_logLik == max(round_logLik)) %>% 
+    mutate(n = n()) %>% # identify species where more than one rounded logLik value is optimal
+    filter(n == 1) -> sums_species
+    
+  
 
 # add absolute latitude
-sums_species$abslatitude = abs(Site_table$lat[match(sums_species$site, Site_table$ID)])
+sums_species$abs_latitude = abs(Site_table$lat[match(sums_species$site, Site_table$ID)])
 
 # add species abundances
 sums_species$abundance = NA
@@ -241,20 +251,28 @@ for (site in unique(sums_species$site)) {
 
 # plot latitudinal patterns in optimal decay_con
 pdf(paste0(path_mortality, "/gridsearch_summary/optLL_con_species.pdf")
-    , height = 4, width = 9)
+, height = 4, width = 9)
 par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), las = 1)
 
-smoothScatter(sums_species$abslatitude, sums_species$decay_con
+smoothScatter(sums_species$abs_latitude, sums_species$decay_con
               , xlab = "latitude (°)"
               , ylab = expression(paste("optimal ", mu, " con"))
 )
 
-m = mgcv::gam(decay_con ~ s(abslatitude), data = sums_species)
-x = seq(0, 55, 1)
-pred = (mgcv::predict.gam(m, se.fit = T, newdata = list(abslatitude = x)))
-lines(x, pred$fit, col = "red", lwd = 2)
-polygon(c(x, rev(x)), c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit)), col = rgb(1, 0.1, 0.1, 0.3), border = NA)
 
+for (qu in c(0.25, 0.5, 0.75)) {
+  
+  m = qgam::qgam(decay_con ~ s(abs_latitude, k = 3)
+                 , data = sums_species, qu = qu
+                 , err = 0.02)
+  x = seq(min(sums_species$abs_latitude), max(sums_species$abs_latitude), 1)
+  pred = mgcv::predict.gam(m, se.fit = T, newdata = list(abs_latitude = x))
+  
+  lines(x, pred$fit, col = "red", lwd = 1.5)
+  polygon(c(x, rev(x))
+          , c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit))
+          , col = rgb(1, 0.1, 0.1, 0.2), border = NA)
+}
 
 smoothScatter(log(sums_species$abundance), sums_species$decay_con
               , xlab = "abundance (N/ha)"
@@ -263,13 +281,20 @@ smoothScatter(log(sums_species$abundance), sums_species$decay_con
               )
 axis(1, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
 
-m = mgcv::gam(decay_con ~ s(log(abundance)), data = sums_species)
-x = seq(min(sums_species$abundance), max(sums_species$abundance), 1)
-pred = (mgcv::predict.gam(m, se.fit = T, newdata = list(abundance = x)))
-lines(log(x), pred$fit, col = "red", lwd = 1.5)
-polygon(c(log(x), rev(log(x)))
-        , c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit))
-        , col = rgb(1, 0.1, 0.1, 0.2), border = NA)
+
+for (qu in c(0.25, 0.5, 0.75)) {
+  
+  m = qgam::qgam(decay_con ~ s(log(abundance), k = 3)
+                 , data = sums_species, qu = qu
+                 , err = 0.2)
+  x = seq(min(sums_species$abundance), max(sums_species$abundance), 1)
+  pred = mgcv::predict.gam(m, se.fit = T, newdata = list(abundance = x))
+  
+  lines(log(x), pred$fit, col = "red", lwd = 1.5)
+  polygon(c(log(x), rev(log(x)))
+          , c(pred$fit-1.96*pred$se.fit, rev(pred$fit+1.96*pred$se.fit))
+          , col = rgb(1, 0.1, 0.1, 0.2), border = NA)
+}
 
 text(grconvertX(0.05, from = "ndc")
      , grconvertY(0.95, from = "ndc")
