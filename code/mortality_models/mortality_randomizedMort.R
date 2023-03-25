@@ -197,12 +197,9 @@ model_fit = function(data, speciesinfo) {
   
   # chose penalty
   # set to default 10 (the same as -1)
-  k1 = k2 = 10 
+  k1 = k2 = k3 = 10 
   if (k1 > speciesinfo$unique_dbh) k1 = speciesinfo$unique_dbh - 2
   if (k2 > speciesinfo$unique_all_BA) k2 = speciesinfo$unique_all_BA - 2
-  
-  # less flexible k for conspecific density
-  k3 = 10
   if (k3 > speciesinfo$unique_con_BA) k3 = speciesinfo$unique_con_BA - 2
   
   
