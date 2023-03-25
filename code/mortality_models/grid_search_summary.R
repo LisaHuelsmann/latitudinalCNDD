@@ -5,7 +5,7 @@
 
 library(dplyr)   # for data wrangling
 library(viridis) # for colors
-
+library(fields)  # for image legend
 
 # create directory
 dir.create(paste0(path_mortality, "gridsearch_summary"))
@@ -152,7 +152,10 @@ plot_map = function(run, term, type, criterion, optimum = T) {
 
 
 pdf(paste0(path_mortality, "/gridsearch_summary/sumLL.pdf"), height = 9, width = 9)
-par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings)))), mar = c(4, 4, 2, 1), las = 1)
+par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings))))
+    , mar = c(4, 4, 2, 1)
+    , oma = c(0, 0, 0, 7)
+    , las = 1)
 
 # get global optimum
 opt = sums_total[which.max(sums_total[, "sumlogLik"]), ]
@@ -164,6 +167,18 @@ for (s in 1:nrow(settings)) {
            , criterion = "sumlogLik"
            , optimum = settings$run[s] == opt$run)
 }
+
+# add legend
+par(oma = c(0, 0, 0, 0)
+    , mar = c(0, 6, 0, 0)
+    , fig = c(0, 1, 0, 1), new = F)
+imagePlot(legend.only = T
+          , col = viridis(128)
+          , legend.shrink = 0.5
+          , legend.width = 1
+          , legend.mar = 6
+          , zlim = range(sums_total[, "sumlogLik"])) 
+
 dev.off()
 
 
@@ -173,7 +188,10 @@ dev.off()
 
 
 pdf(paste0(path_mortality, "/gridsearch_summary/meanAUC.pdf"), height = 9, width = 9)
-par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings)))), mar = c(4, 4, 2, 1), las = 1)
+par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings))))
+    , mar = c(4, 4, 2, 1)
+    , oma = c(0, 0, 0, 7)
+    , las = 1)
 
 # get global optimum
 opt = sums_total[which.max(sums_total[, "meanAUC"]), ]
@@ -185,6 +203,17 @@ for (s in 1:nrow(settings)) {
            , criterion = "meanAUC"
            , optimum = settings$run[s] == opt$run)
 }
+
+# add legend
+par(oma = c(0, 0, 0, 0)
+    , mar = c(0, 6, 0, 0)
+    , fig = c(0, 1, 0, 1), new = F)
+imagePlot(legend.only = T
+          , col = viridis(128)
+          , legend.shrink = 0.5
+          , legend.width = 1
+          , legend.mar = 6
+          , zlim = range(sums_total[, "meanAUC"])) 
 dev.off()
 
 
