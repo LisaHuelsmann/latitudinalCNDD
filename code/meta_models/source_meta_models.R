@@ -216,7 +216,7 @@ for (i in c("log_mortality", "log1p_growth")) {
   axis(1, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
   
   for (qu in c(0.25, 0.5, 0.75)) {
-    form = formula(paste(i, "~ s(log_abundance)"))
+    form = formula(paste(i, "~ s(log_abundance, k = 5)"))
     m = qgam::qgam(form, data = M, qu = qu)
     
     pred = cbind(x = sort(M$log_abundance)
@@ -251,7 +251,7 @@ axis(2, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
 
 for (qu in c(0.25, 0.5, 0.75)) {
   
-  m = qgam::qgam(log_abundance ~ abs_latitude, data = M, qu = qu)
+  m = qgam::qgam(log_abundance ~ s(abs_latitude, k = 5), data = M, qu = qu)
   
   x = seq(min(M$abs_latitude), max(M$abs_latitude), 1)
   pred = mgcv::predict.gam(m, se.fit = T, newdata = list(abs_latitude = x))
@@ -285,9 +285,9 @@ dev.off()
 if (length(sites) == 23) {
   
   site_order = rev(c("hkk", "fus", "mos", "lam", "kha", "pas"
-                     , "sin", "edo", "len", "idc", "kor"
-                     , "ama", "lpl", "bci", "luq", "ucsc", "wfdp", "ldw"
-                     , "wab", "scbi", "serc", "wyw", "zof"))
+                     , "sin", "edo", "len", "kor", "idc"
+                     , "ama", "lpl", "bci", "luq", "ucsc", "wfdp", "scbi"
+                     , "ldw", "wab", "serc", "wyw", "zof"))
   
 } else { 
   
@@ -329,7 +329,7 @@ grat = st_graticule(lat = c(-90, -45, 0, 45, 90)
 
 
 pdf(paste0(path_meta, run, "/Fig1.pdf")
-    , height = 165/25.4*0.9
+    , height = 247/25.4*0.7
     , width = 183/25.4)
 
 
@@ -354,7 +354,7 @@ for (term in terms) {
       mtext("stabilizing CNDD (%)", side = 2, line = -0.5, outer = T, cex = 0.6)
       
       # circular coordinates
-      multiCoords = circular_coor(order = site_order, inner = 8)
+      multiCoords = circular_coor(order = site_order, inner = 7)
       multiCenter = cbind(rowMeans(multiCoords[, 1:2]), rowMeans(multiCoords[, 3:4]))
       
       # add map in center

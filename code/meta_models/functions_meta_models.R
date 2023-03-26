@@ -47,54 +47,72 @@ polyarea <- function(x, y, d=1) {
   return(a)
 }
 
+
 # coordinates for plots
 circular_coor = function(order, inner) {
+  
+  # select corners
+  corners = 1:4*round(length(order)/4, 0)-1
+  cornerorder = order[corners]
+  cornerorder = cornerorder[!is.na(cornerorder)]
+  
+  # reduce order for circular plotting
+  circorder = order[-corners]
   
   # settings
   deg2rad <- function(deg) {(deg * pi) / (180)}
   twist = 63
   sizeMiddle = 0.7
-  sideMid = 3*(1-sizeMiddle) / 3.5
-  sideDis = (1-sizeMiddle)/3.7
+  sideMid = 0.8*(1-sizeMiddle)
+  sideDis = 0.3*(1-sizeMiddle)
   
   # object for coordinates
-  multiCoords = matrix(0, length(order) + 1, 4)
-  multiCoords[1,] =  mid = rep(c(0.5 - 0.5*sizeMiddle, 0.5 + 0.5*sizeMiddle), 2)
+  circCoords = matrix(0, length(circorder) + 1, 4)
+  circCoords[1,] =  mid = rep(c(0.5 - 0.5*sizeMiddle, 0.5 + 0.5*sizeMiddle), 2)
   
   # inner circle
   angles_inner = seq(0+twist+10,360+twist+10,length.out = inner+1)[1:inner]
   for(p in 2:(inner+1)){
     pp = p - 1
-    multiCoords[p,1] = cos(deg2rad(angles_inner[pp])) * (sideMid + 0) + 0.5 - sideDis
-    multiCoords[p,2] = multiCoords[p,1] + 2*sideDis
-    if(multiCoords[p,1] > multiCoords[p,2]) multiCoords[p,] = multiCoords[p,c(2,1,3,4)]
-    multiCoords[p,3] = sin(deg2rad(angles_inner[pp])) * (sideMid + 0) + 0.5 -sideDis
-    multiCoords[p,4] = multiCoords[p,3] + 2*sideDis
-    if( multiCoords[p,4] > 1) multiCoords[p,4] = 1
+    circCoords[p,1] = cos(deg2rad(angles_inner[pp])) * (sideMid - 0.01) + 0.5 - sideDis
+    circCoords[p,2] = circCoords[p,1] + 2*sideDis
+    if(circCoords[p,1] > circCoords[p,2]) circCoords[p,] = circCoords[p,c(2,1,3,4)]
+    circCoords[p,3] = sin(deg2rad(angles_inner[pp])) * (sideMid - 0.01) + 0.5 -sideDis
+    circCoords[p,4] = circCoords[p,3] + 2*sideDis
+    if( circCoords[p,4] > 1) circCoords[p,4] = 1
   }
   
   # outer circle
-  angles_outer = seq(0+twist,360+twist,length.out = length(order)-inner+1)[1:(length(order) - inner)]
-  for(p in (inner+2):(length(order)+1)){
+  angles_outer = seq(0+twist,360+twist,length.out = length(circorder)-inner+1)[1:(length(circorder) - inner)]
+  for(p in (inner+2):(length(circorder)+1)){
     pp = p - (inner+1)
-    multiCoords[p,1] = cos(deg2rad(angles_outer[pp])) * (sideMid + 0.16) + 0.5 - sideDis
-    multiCoords[p,2] = multiCoords[p,1] + 2*sideDis
-    if(multiCoords[p,1] > multiCoords[p,2]) multiCoords[p,] = multiCoords[p,c(2,1,3,4)]
-    multiCoords[p,3] = sin(deg2rad(angles_outer[pp])) * (sideMid + 0.16) + 0.5 -sideDis
-    multiCoords[p,4] = multiCoords[p,3] + 2*sideDis
-    if( multiCoords[p,4] > 1) multiCoords[p,4] = 1
+    circCoords[p,1] = cos(deg2rad(angles_outer[pp])) * (sideMid + 0.17) + 0.5 - sideDis
+    circCoords[p,2] = circCoords[p,1] + 2*sideDis
+    if(circCoords[p,1] > circCoords[p,2]) circCoords[p,] = circCoords[p,c(2,1,3,4)]
+    circCoords[p,3] = sin(deg2rad(angles_outer[pp])) * (sideMid + 0.17) + 0.5 -sideDis
+    circCoords[p,4] = circCoords[p,3] + 2*sideDis
+    if( circCoords[p,4] > 1) circCoords[p,4] = 1
   }
   
   # bring in circular order
-  multiCoords = multiCoords[order(c(angles_inner, angles_outer))+1, ]
+  circCoords = circCoords[order(c(angles_inner, angles_outer))+1, ]
   
-  # 
-  # plot.new()
-  # for(site in order) {
-  #   par(fig = multiCoords[which(order == site)+1,], new = T)
-  #   par(mar = c(1, 1, 1, 1))
-  #   hist(rnorm(100), main = "")
-  # }
+  # add corners
+  xcorners = c(0.1, 0.1, 0.9, 0.9)[1:length(cornerorder)]
+  ycorners = c(0.9, 0.1, 0.1, 0.9)[1:length(cornerorder)]
+  cornerCoords = matrix(0, length(cornerorder), 4)
+  cornerCoords[, 1] = xcorners-sideDis
+  cornerCoords[, 2] = xcorners+sideDis
+  cornerCoords[, 3] = ycorners-sideDis
+  cornerCoords[, 4] = ycorners+sideDis
+  
+  # combine coordinates
+  multiCoords = matrix(0, length(order), 4)
+  multiCoords[-corners, ] = circCoords
+  multiCoords[corners[1:length(cornerorder)], ] = cornerCoords
+  
+  return(multiCoords)
+  
 }
 
 
