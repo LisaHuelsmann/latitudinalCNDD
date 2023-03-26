@@ -40,6 +40,7 @@ load(paste0(path_mortality, run, "/global_mortality.Rdata"))
 terms = unique(AMEsamples_global$term)[startsWith(unique(AMEsamples_global$term), "con_")]
 types = c("AME", "rAME")
 changes = unique(AMEsamples_global$change)
+changes = changes[changes != "iqr"]          # chose changes but exclude iqr (estimates not comparable!)
 sites = sort(unique(AMEsamples_global$site))
 
 
@@ -1009,5 +1010,98 @@ for (i in settings$names) {
 
 }
 
+
+
+# IQR ---------------------------------------------------------------------
+
+
+# only when iqr result is available
+if (sum(AMEsums_global$change == "iqr") > 0) {
+  
+  
+  pdf(paste0(path_meta, run, "/iqr.pdf")
+      , height = 5.5, width = 11)
+  
+  par(mfrow = c(1, 2), las = 1, mar = c(4, 4, 3, 1))
+  change = "iqr"
+  
+  for (term in terms) {
+    
+    for (type in types) {
+      
+      # select output
+      output = get(paste0(type, "sums_global"))
+      sel = output$term == term & output$change == change
+      dat_sel = output[sel, ]
+      
+      # backtransformation
+      backtrans = get(paste0("backtrans_", type))
+      
+      # plotting settings
+      xlim = c(-1, 1)*max(abs(backtrans(dat_sel$estimate))*100)/20
+      if (type == "rAME") xlim[1] = -100
+      if (type == "rAME") ylim = c(0, 500) else ylim = c(0, 800)
+      breaks = ifelse(type == "rAME", 1000, 2000)
+      outside = sum(backtrans(dat_sel$estimate)*100 < xlim[1] | backtrans(dat_sel$estimate)*100 > xlim[2]) / nrow(dat_sel)
+      
+      
+      # histogram
+      hist(backtrans(dat_sel$estimate)*100
+           , main = type
+           , xlab = paste("stabilizing CNDD (%)")
+           , xlim = xlim
+           , breaks = breaks
+           , border = "grey"
+           , ylim = ylim)
+      abline(v = 0)
+      
+      # add quantile range
+      qs = quantile(backtrans(dat_sel$estimate)*100, probs = c(0.25, 0.75))
+      arrows(qs[1], ylim[2]*0.8, qs[2], ylim[2]*0.8, angle = 90, code = 3, length = 0.04)
+      interpretation = ifelse(type == "AME"
+                              , "change in mortality per year"
+                              , "relative change in mortality")
+      text(qs[2]*2, ylim[2]*0.8, paste0("50 % of CNDD estimates between\n"
+                                        , round(qs[1], 2), " and ", round(qs[2], 2)
+                                        , " %\n", interpretation)
+           , cex = 0.7, adj = 0)
+      
+      
+      
+      # add mean and CI from meta-regression
+      dat = escalc(measure = "GEN"
+                   , yi = estimate
+                   , sei = std.error
+                   , slab = paste(sp, site, sep = ", ")
+                   , data = dat_sel)
+      mod = rma.mv(yi = yi
+                   , V = vi
+                   , random = list( ~ 1 | site/sp)           # random intercept for species in site
+                   , method = "REML"
+                   , data = dat
+                   , control=list(optimizer = "optimParallel", ncpus = ncpu_meta)
+                   , sparse = T
+                   # , verbose = T
+      )
+      summary(mod)
+      CI = predict(mod, transf = backtrans)
+      arrows(CI$ci.lb*100, ylim[2]*0.6, CI$ci.ub*100, ylim[2]*0.6, angle = 90, code = 3, length = 0.04)
+      points(backtrans(coef(mod))*100, ylim[2]*0.6
+             , pch = 18, cex = 1.4, col = "darkred")
+      text(qs[2]*2, ylim[2]*0.6, paste0("mean CNDD from meta-regression \nat "
+                                        , round(backtrans(coef(mod))*100, 2), " % ", interpretation)
+           , cex = 0.7, adj = 0)
+      
+      
+      # number of estimates outside
+      text(xlim[1], ylim[1]+0.92*ylim[2], paste0(round(100*outside, 0), "% of estimates outside")
+           , cex = 0.6, adj = c(0, 0), col = "grey")
+      
+    }
+  }
+  
+  dev.off()
+  
+}
 
 
