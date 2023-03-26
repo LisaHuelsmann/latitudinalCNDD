@@ -99,8 +99,8 @@ for (run in runs) {
     source(paste0("code/mortality_models/mortality_", run, ".R"), local = T)
   }
   result <- pblapply(cl = cl, settings, source_setting, run = run,
-                     paths = list(path_output = path_output, 
-                                  path_input = path_input, 
+                     paths = list(path_output = path_output,
+                                  path_input = path_input,
                                   path_mortality = path_mortality))
   stopCluster(cl)
   
