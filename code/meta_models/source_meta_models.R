@@ -970,12 +970,13 @@ for (i in settings$names) {
   my_list <- lapply(res[[run]], function(x) {
     
     # digits depending on effect size
-    digits = ceiling(log10(1/min(abs(1*coef(x[[i]]))))) + 1
+    temp = format(coef(x[[i]]), signdigits = 2, digits = 2, trim = T)
+    digits = decimalplaces(temp)
     
     # collect model summary
     tbl_regression(x[[i]]
                    , estimate_fun = ~style_sigfig(., digits = digits)
-                   , pvalue_fun = function(x) scales::pvalue(x, accuracy = 0.00001, add_p = F)) %>%
+                   , pvalue_fun = ~format_pval(., addp = F)) %>%
       bold_p() %>%
       # bold_labels() %>%
       as_flex_table() %>%
@@ -984,7 +985,8 @@ for (i in settings$names) {
       font(fontname = "Times New Roman", part = "all") %>%
       
       # standard deviations for site and species
-      add_footer_lines(values = paste("sigma", x[[i]]$s.names, "=", round(sqrt(x[[i]]$sigma2), digits))) %>% 
+      add_footer_lines(values = paste("sigma", x[[i]]$s.names, "=", 
+                                      format(sqrt(x[[i]]$sigma2), nsmall = 2, digits = 2))) %>% 
       
       # pseudo R2 for including additional life history strategies
       # proportional reduction in the variance components as a sort of pseudo R-squared value

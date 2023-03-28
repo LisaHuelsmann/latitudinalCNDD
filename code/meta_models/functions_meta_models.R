@@ -116,17 +116,22 @@ circular_coor = function(order, inner) {
   
 }
 
-format_pval = function(p, accuracy = 0.0000001, signdigits = 2) {
+format_pval = function(p, accuracy = 0.0000001, signdigits = 2, addp = T) {
   
   # rounding to signdigits
   p_return = sapply(p, format, scientific = F, nsmall = signdigits, digits = signdigits)
-  p_return = paste0("p=", p_return)
+  if (addp) p_return = paste0("p=", p_return)
   
   # smaller than accuracy
   sel = p < accuracy
-  p_return[sel] = paste0("p<", accuracy)
+  if (addp) p_return[sel] = paste0("p<", accuracy) else p_return[sel] = paste0("<", accuracy)
   
   return(p_return)
+}
+
+
+decimalplaces <- function(x) {
+    nchar(strsplit(sub('0+$', '', x), ".", fixed = TRUE)[[1]][[2]])
 }
 
 
