@@ -7,6 +7,7 @@
 
 
 
+
 # Aesthetic functions -----------------------------------------------------
 
 
@@ -113,6 +114,19 @@ circular_coor = function(order, inner) {
   
   return(multiCoords)
   
+}
+
+format_pval = function(p, accuracy = 0.0000001, signdigits = 2) {
+  
+  # rounding to signdigits
+  p_return = sapply(p, format, scientific = F, nsmall = signdigits, digits = signdigits)
+  p_return = paste0("p=", p_return)
+  
+  # smaller than accuracy
+  sel = p < accuracy
+  p_return[sel] = paste0("p<", accuracy)
+  
+  return(p_return)
 }
 
 
@@ -309,11 +323,9 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
         
         # p-value
         text(min(xs), sav$ci.ub[1]+0.02*ylim[2]
-             , scales::pvalue(summary(mod)$pval[2],
-                              accuracy = 0.00001, # Number to round to
-                              add_p = TRUE)
-             , cex = cex.text, adj = c(0, 0))
-        
+             , format_pval(summary(mod)$pval[2])
+             , cex = cex.text, adj = c(0, 0)
+        )
       }
       
       # add how much of the data (in terms of nobs) is outside plotting area
@@ -361,9 +373,7 @@ get_predictions_latitude = function(x
   # global y limits
   y = 100*c(predict(model, transf = backtrans)$ci.lb, 
             predict(model, transf = backtrans)$ci.ub)
-  maxp = max(y)
-  minp = min(y)
-  ylim = c(minp, maxp)*1.1
+  ylim = range(y)
   
   res = list()
   
@@ -397,9 +407,8 @@ get_predictions_latitude = function(x
         refit_model = metafor::update.rma(model, data = refit_data)
         p_value = refit_model$pval[rownames(refit_model$b)=="tLatitude"]
       }
-      p_value = scales::pvalue(p_value,
-                               accuracy = 0.00001, # Number to round to
-                               add_p = TRUE)
+      p_value = format_pval(p_value)
+      
     } else {
       p_value = NULL
     }
@@ -429,9 +438,7 @@ get_predictions_abundance = function (x
   # global y limits
   y = 100*c(predict(model, transf = backtrans)$ci.lb, 
             predict(model, transf = backtrans)$ci.ub)
-  maxp = max(y)
-  minp = min(y)
-  ylim = c(minp, maxp)*1.1
+  ylim = range(y)
   
   res = list()
   
@@ -463,9 +470,8 @@ get_predictions_abundance = function (x
         refit_model = metafor::update.rma(model, data = refit_data)
         p_value = refit_model$pval[rownames(refit_model$b)=="tAbundance"]
       }
-      p_value = scales::pvalue(p_value,
-                               accuracy = 0.00001, # Number to round to
-                               add_p = TRUE)
+      p_value = format_pval(p_value)
+      
     } else {
       p_value = NULL
     }
