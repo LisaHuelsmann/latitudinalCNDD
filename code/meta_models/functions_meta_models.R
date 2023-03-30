@@ -213,7 +213,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
   
   # limits
   xlim = log(c(min(data$abundance), max(data$abundance)))
-  ylim = quantile(data$estimate, probs = c(0.15, ifelse(type == "rAME", 0.8, 0.8)))
+  ylim = quantile(data$estimate, probs = c(0.2, 0.8))
   
   # y sequence
   digitrounding = ifelse(type == "rAME", 100, 1000)
@@ -224,8 +224,9 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
   
   
   
-  # use names from order when not provided in names
+  # use site names from order when not provided in names
   if (is.null(names)) names = order
+  
   
   if (returnMod) models = list()
   
@@ -345,7 +346,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
              , cex = cex.text, adj = c(0, 0), col = "grey")
       }
       par(xpd = NA, new = T)
-      text(xlim[1]+0.45*xlim[1], ylim[2]-0.25*ylim[2]
+      text(0.95*xlim[1], ylim[2]-0.3*ylim[2]
            , gsub('(.{1,30})(\\s|$)', '\\1\n', names[i])
            , cex = cex.text, adj = c(0, 0), font = 2, lheight=.6)
       par(xpd = F, new = T)
@@ -376,7 +377,7 @@ get_predictions_latitude = function(x
   backtrans = get(paste0("backtrans_", x$type))
   
   # global y limits
-  y = 100*c(predict(model, transf = backtrans)$ci.lb, 
+  y = 0.8*100*c(predict(model, transf = backtrans)$ci.lb, 
             predict(model, transf = backtrans)$ci.ub)
   ylim = range(y)
   
@@ -423,6 +424,7 @@ get_predictions_latitude = function(x
                     , pred_line = pred_line, x_line = x_line
                     , pred_poly = pred_poly, x_poly = x_poly
                     , pvalue = p_value
+                    , type = x$type
                     , label = paste("CNDD assessed as", x$type, "in", x$term, "calculated at", 
                                     x$change, "densities."))
   }
@@ -441,7 +443,7 @@ get_predictions_abundance = function (x
   backtrans = get(paste0("backtrans_", x$type))
   
   # global y limits
-  y = 100*c(predict(model, transf = backtrans)$ci.lb, 
+  y = 0.8*100*c(predict(model, transf = backtrans)$ci.lb, 
             predict(model, transf = backtrans)$ci.ub)
   ylim = range(y)
   
@@ -486,6 +488,7 @@ get_predictions_abundance = function (x
                     , pred_line = pred_line, x_line = x_line
                     , pred_poly = pred_poly, x_poly = x_poly
                     , pvalue = p_value
+                    , type = x$type
                     , label = paste("CNDD assessed as", x$type, "in", x$term, "calculated at", 
                                     x$change, "densities."))
   }
@@ -516,6 +519,7 @@ plot_latitude = function(preds
   
   runs = names(preds)
   abundances = as.numeric(names(preds[[1]]))
+  type = preds[[1]][[1]]$type
   
   # generate color if needed
   if (is.null(col_run)) col = "orchid4"
@@ -553,7 +557,8 @@ plot_latitude = function(preds
       mtext("absolute latitude (°)", 1, 2.5, cex = 2/3)
     }
     if (i %in% labelsx) {
-      mtext("stabilizing CNDD (%)", 2, 3.5, las = 0, cex = 2/3)
+      unit = ifelse(type == "AME", "(% / year)", "(%)")
+      mtext(paste("stabilizing CNDD", unit), 2, 3.5, las = 0, cex = 2/3)
     }
     
     for (run in runs) {
@@ -599,7 +604,8 @@ plot_latitude = function(preds
     mtext("absolute latitude (°)", 1, 1, outer = T, cex = 2/3)
   }
   if (labelsy == "outer") {
-    mtext("stabilizing CNDD (%)", 2, 2, outer = T, las = 0, cex = 2/3)
+    unit = ifelse(type == "AME", "(% / year)", "(%)")
+    mtext(paste("stabilizing CNDD", unit), 2, 2.5, outer = T, las = 0, cex = 2/3)
   }
   
 }
@@ -619,6 +625,7 @@ plot_abundance = function(preds
   
   runs = names(preds)
   latitudes = as.numeric(names(preds[[1]]))
+  type = preds[[1]][[1]]$type
   
   # generate color if needed
   if (is.null(col_run) & is.null(col_lat)) col = "orchid4"
@@ -646,10 +653,10 @@ plot_abundance = function(preds
                                        , xpd=NA)
     
     if (is.null(latitude_names)) {
-      graphics::text(transAbund(xlim, ref_abund)[2], 0.9*ylim[2], paste0("Latitude\n", latitudes[i], "°"), 
+      graphics::text(transAbund(xlim, ref_abund)[2], 0.8*ylim[2], paste0("Latitude\n", latitudes[i], "°"), 
                      adj = 1, pos = 2)
     } else {
-      graphics::text(transAbund(xlim, ref_abund)[2], 0.9*ylim[2], paste0(latitude_names[i], "\n", latitudes[i], "°"), 
+      graphics::text(transAbund(xlim, ref_abund)[2], 0.8*ylim[2], paste0(latitude_names[i], "\n", latitudes[i], "°"), 
                      adj = 1, pos = 2)
     }
     
@@ -665,7 +672,8 @@ plot_abundance = function(preds
       mtext("abundance (N/ha)", 1, 2.5, cex = 2/3)
     }
     if (i %in% labelsy) {
-      mtext("stabilizing CNDD (%)", 2, 3.5, las = 0, cex = 2/3)
+      unit = ifelse(type == "AME", "(% / year)", "(%)")
+      mtext(paste("stabilizing CNDD", unit), 2, 3.5, las = 0, cex = 2/3)
     }
     
     
@@ -714,7 +722,8 @@ plot_abundance = function(preds
     mtext("abundance (N/ha)", 1, 1, outer = T, cex = 2/3)
   }
   if (labelsy == "outer") {
-    mtext("stabilizing CNDD (%)", 2, 2.5, outer = T, las = 0, cex = 2/3)
+    unit = ifelse(type == "AME", "(% / year)", "(%)")
+    mtext(paste("stabilizing CNDD", unit), 2, 2.5, outer = T, las = 0, cex = 2/3)
   }
   
 }

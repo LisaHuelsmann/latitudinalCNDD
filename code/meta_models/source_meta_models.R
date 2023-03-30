@@ -346,12 +346,13 @@ for (term in terms) {
       dat = output[sel, ]
       
       # Layout
-      par(oma = c(0.5, 0.5, 0, 0), fig = c(0, 1, 0, 1), new = F)
+      par(oma = c(0.5, 0.6, 0, 0), fig = c(0, 1, 0, 1), new = F)
       plot.new()
       
       # axes labels
       mtext("abundance (N/ha)", side = 1, line = -0.5, outer = T, cex = 0.6)
-      mtext("stabilizing CNDD (%)", side = 2, line = -0.5, outer = T, cex = 0.6)
+      unit = ifelse(type == "AME", "(% / year)", "(%)")
+      mtext(paste("stabilizing CNDD", unit), side = 2, line = -0.1, outer = T, cex = 0.6)
       
       # circular coordinates
       multiCoords = circular_coor(order = site_order, inner = 7)
@@ -384,7 +385,7 @@ for (term in terms) {
       plot(st_geometry(sites_sf), add = T, pch = 16, col = cols_order, cex = 0.6)
       
       # plot estimates versus abundance
-      par(mar = c(1, 1.2, 1, 0.1))
+      par(mar = c(1, 1.2, 0.8, 0.1))
       temp = plot_estimates_vsAbundance(dat, type = type, order = site_order, names = site_names
                                         , trans = get(paste0("trans_", type))
                                         , backtrans = get(paste0("backtrans_", type))
@@ -413,7 +414,7 @@ rm(site_models)
 
 # Fit site specific meta-regressions without moderators -----------------------
 
-# Note that estimates are untransformed!
+# Note that estimates are not back-transformed!
 
 
 # Fit models and store in list
@@ -455,7 +456,7 @@ for (term in terms) {
         reliable = check$reliable
         
         
-        # export estimates when reliable (all untransformed)
+        # export estimates when reliable (all not back-transformed)
         out = rbind(out, data.frame(site = site
                                     , mean = ifelse(reliable, as.vector(mod$b), NA)
                                     , ci.lb = ifelse(reliable, mod$ci.lb, NA) 
@@ -598,7 +599,7 @@ if (any(!is.null(sums_global$test.spatial))) {
 
 
 
-# Fit CNDD models ---------------------------------------------------------
+# Fit global CNDD models ---------------------------------------------------------
 
 
 
@@ -647,6 +648,7 @@ for (term in terms) {
                    , sparse = T
                    # , verbose = T
       )
+
 
       # starting values (broad guesses to speed up fitting)
       start_sigma = mod$sigma2
@@ -1048,9 +1050,10 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
       
       
       # histogram
+      unit = ifelse(type == "AME", "(% / year)", "(%)")
       hist(backtrans(dat_sel$estimate)*100
            , main = type
-           , xlab = paste("stabilizing CNDD (%)")
+           , xlab = paste("stabilizing CNDD", unit)
            , xlim = xlim
            , breaks = breaks
            , border = "grey"
