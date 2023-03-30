@@ -141,14 +141,14 @@ sums_global %>%
             precipitation = MAP,
             log_abundance = log(abundance),
             log1p_growth = log1p(incr_median),
-            log_mortality = log(mort_rate),
+            logit_survival = qlogis(1-mort_rate),
             log_size = log(dbh_q90)) -> M
 
 # calculate standardized demographic rates per site
 M %>% 
   group_by(site) %>%
   mutate(stand_growth = as.vector(scale(log1p_growth)),
-         stand_surv = as.vector(scale(qlogis(1-exp(log_mortality)))),
+         stand_surv = as.vector(scale(logit_survival)),
          stand_size = as.vector(scale(log_size))) -> M_standardized
 
 
@@ -207,7 +207,7 @@ pdf(paste0(path_meta, run, "/data_overview.pdf")
 
 # plot abundance vs demography
 par(mfrow = c(2, 2))
-for (i in c("log_mortality", "log1p_growth")) {
+for (i in c("logit_survival", "log1p_growth")) {
   smoothScatter(M$log_abundance, M[, i]
                 , xlab = "abundance (N/ha)", ylab = gsub("_", " ", i)
                 , transformation = function(x) x^.5
