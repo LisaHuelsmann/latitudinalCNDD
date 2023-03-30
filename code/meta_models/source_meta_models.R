@@ -49,6 +49,11 @@ sites = sort(unique(AMEsamples_global$site))
 # Settings ----------------------------------------------------------------
 
 
+
+# suppress scientific notation
+options(scipen = 9999)
+
+
 # reference values for standardizing predictors in meta regression
 ref_abund = 1
 ref_lat = 11.75
