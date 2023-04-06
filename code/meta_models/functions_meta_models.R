@@ -543,7 +543,7 @@ plot_latitude = function(preds
     
     # add label for panel if needed
     if (i == 1 & !is.null(panel)) text(grconvertX(0.05, from = "ndc")
-                                       , grconvertY(0.92, from = "ndc")
+                                       , grconvertY(0.98, from = "ndc")
                                        , labels = panel
                                        , cex = 3/2
                                        , xpd=NA)
@@ -563,33 +563,35 @@ plot_latitude = function(preds
     
     for (run in runs) {
       
+      # extract prediction
+      pred_run = preds[[run]][[as.character(abundances[i])]]
+      
       # define color
       if (!is.null(col_run)) col = col_run[which(runs == run)]
       
-      lines(preds[[run]][[as.character(abundances[i])]]$x_line
-            , preds[[run]][[as.character(abundances[i])]]$pred_line
+      lines(pred_run$x_line
+            , pred_run$pred_line
             , col = col
       )
-      polygon(preds[[run]][[as.character(abundances[i])]]$x_poly
-              , preds[[run]][[as.character(abundances[i])]]$pred_poly
+      polygon(pred_run$x_poly
+              , pred_run$pred_poly
               , col = add.alpha(col, 0.1)
               , border = F)
       
       # p-value
-      if (!is.null(preds[[run]][[as.character(abundances[i])]]$pvalue)) {
-        text(preds[[run]][[as.character(abundances[i])]]$x_poly[1]
-             , 1.5*preds[[run]][[as.character(abundances[i])]]$pred_line[1] - 
-               0.5*rev(preds[[run]][[as.character(abundances[i])]]$pred_poly)[1]
-             , preds[[run]][[as.character(abundances[i])]]$pvalue
+      if (!is.null(pred_run$pvalue)) {
+        text(pred_run$x_poly[1]
+             , pred_run$pred_line[1] + 0.8*(rev(pred_run$pred_poly)[1] - pred_run$pred_line[1])
+             , pred_run$pvalue
              , cex = 1
              , adj = c(0, 1))
       }
       
       # add run name if i == 1
-      if (i == 1) text(min(preds[[run]][[as.character(abundances[i])]]$x_poly)
+      if (i == 1) text(min(pred_run$x_poly)
                        , ifelse((which(runs == run) %% 2) == 0
-                                , min(preds[[run]][[as.character(abundances[i])]]$pred_poly)
-                                , max(preds[[run]][[as.character(abundances[i])]]$pred_poly))
+                                , min(pred_run$pred_poly)
+                                , max(pred_run$pred_poly))
                        , names[which(runs == run)]
                        , col = col
                        , adj = c(0, ifelse((which(runs == run) %% 2) == 0, 1, 0))
@@ -680,34 +682,36 @@ plot_abundance = function(preds
     
     for (run in runs) {
       
+      # extract prediction
+      pred_run = preds[[run]][[as.character(latitudes[i])]]
+      
       # define color
       if (!is.null(col_run)) col = col_run[which(runs == run)]
       if (!is.null(col_lat)) col = col_lat[i]
       
-      lines(transAbund(preds[[run]][[as.character(latitudes[i])]]$x_line, ref_abund)
-            , preds[[run]][[as.character(latitudes[i])]]$pred_line
+      lines(transAbund(pred_run$x_line, ref_abund)
+            , pred_run$pred_line
             , col = col
       )
-      polygon(transAbund(preds[[run]][[as.character(latitudes[i])]]$x_poly, ref_abund)
-              , preds[[run]][[as.character(latitudes[i])]]$pred_poly
+      polygon(transAbund(pred_run$x_poly, ref_abund)
+              , pred_run$pred_poly
               , col = add.alpha(col, 0.1)
               , border = F)
       
       # p-value
-      if (!is.null(preds[[run]][[as.character(latitudes[i])]]$pvalue)) {
-        text(transAbund(preds[[run]][[as.character(latitudes[i])]]$x_poly[1], ref_abund)
-             , 1.5*preds[[run]][[as.character(latitudes[i])]]$pred_line[1] - 
-               0.5*rev(preds[[run]][[as.character(latitudes[i])]]$pred_poly)[1]
-             , preds[[run]][[as.character(latitudes[i])]]$pvalue
+      if (!is.null(pred_run$pvalue)) {
+        text(transAbund(pred_run$x_poly[1], ref_abund)
+             , pred_run$pred_line[1] + 0.8*(rev(pred_run$pred_poly)[1] - pred_run$pred_line[1])
+             , pred_run$pvalue
              , cex = 1
              , adj = c(0, 1))
       }
       
       # add run name if i == 1
-      if (i == 1) text(min(transAbund(preds[[run]][[as.character(latitudes[i])]]$x_poly, ref_abund))
+      if (i == 1) text(min(transAbund(pred_run$x_poly, ref_abund))
                        , ifelse((which(runs == run) %% 2) == 0
-                                , min(preds[[run]][[as.character(latitudes[i])]]$pred_poly)
-                                , max(preds[[run]][[as.character(latitudes[i])]]$pred_poly))
+                                , min(pred_run$pred_poly)
+                                , max(pred_run$pred_poly))
                        , names[which(runs == run)]
                        , col = col
                        , adj = c(0, ifelse((which(runs == run) %% 2) == 0, 1, 0))
