@@ -542,7 +542,7 @@ plot_latitude = function(preds
     )
     
     # add label for panel if needed
-    if (i == 1 & !is.null(panel)) text(grconvertX(0.05, from = "ndc")
+    if (i == 1 & !is.null(panel)) text(grconvertX(0.02, from = "ndc")
                                        , grconvertY(0.98, from = "ndc")
                                        , labels = panel
                                        , cex = 3/2
@@ -649,7 +649,7 @@ plot_abundance = function(preds
     )
     
     # add label for panel if needed
-    if (i == 1 & !is.null(panel)) text(grconvertX(0.05, from = "ndc")
+    if (i == 1 & !is.null(panel)) text(grconvertX(0.02, from = "ndc")
                                        , grconvertY(0.48, from = "ndc")
                                        , labels = panel
                                        , cex = 3/2

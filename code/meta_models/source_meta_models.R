@@ -233,13 +233,13 @@ for (i in c("logit_survival", "log1p_growth")) {
   }
 }
 
-text(grconvertX(0.05, from = "ndc")
-     , grconvertY(0.95, from = "ndc")
+text(grconvertX(0.02, from = "ndc")
+     , grconvertY(0.98, from = "ndc")
      , labels = "a"
      , cex = 3/2
      , xpd=NA)
 text(grconvertX(0.5, from = "ndc")
-     , grconvertY(0.95, from = "ndc")
+     , grconvertY(0.98, from = "ndc")
      , labels = "b"
      , cex = 3/2
      , xpd=NA)
@@ -267,7 +267,7 @@ for (qu in c(0.25, 0.5, 0.75)) {
           , col = rgb(1, 0.1, 0.1, 0.2), border = NA)
 }
 
-text(grconvertX(0.05, from = "ndc")
+text(grconvertX(0.02, from = "ndc")
      , grconvertY(0.45, from = "ndc")
      , labels = "c"
      , cex = 3/2
@@ -548,13 +548,13 @@ for (i in 1:length(sitemean_list)) {
     text(0.9*max(out$ci.ub), 1.1*cv*max(out$sigma), paste0("CV = ", cv), col = "grey")
   }
   
-  text(grconvertX(0.05, from = "ndc")
-       , grconvertY(0.95, from = "ndc")
+  text(grconvertX(0.02, from = "ndc")
+       , grconvertY(0.98, from = "ndc")
        , labels = "a"
        , cex = 3/2
        , xpd=NA)
   text(grconvertX(0.5, from = "ndc")
-       , grconvertY(0.95, from = "ndc")
+       , grconvertY(0.98, from = "ndc")
        , labels = "b"
        , cex = 3/2
        , xpd=NA)
