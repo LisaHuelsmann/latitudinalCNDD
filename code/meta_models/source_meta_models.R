@@ -659,27 +659,6 @@ for (term in terms) {
       start_sigma = mod$sigma2
       if (any(start_sigma <= 0)) start_sigma = rep(coef(mod)[1]/2, length(start_sigma))
       
-      # Cooks distance
-      # how much the whole regression model would change if ith case is removed
-      D = cooks.distance(mod, reestimate = F, ncpus = ncpu_meta, parallel = "snow", progbar = F)
-      exclude = D>0.005
-      dat_reduced = dat[!(exclude | is.na(exclude)), ]
-
-
-      # fit abundance-mediated model with reduced data
-      mod_x = rma.mv(yi = yi
-                           , V = vi
-                           , mods = ~ tLatitude * tAbundance
-                           , random = list(~ 1 | site/sp)
-                           , method = "REML"
-                           , data = dat_reduced
-                           , control=list(optimizer = "optimParallel"
-                                          , ncpus = ncpu_meta
-                                          , sigma2.init = start_sigma)
-                           , sparse = T
-                           # , verbose = T
-      )
-
       
       # fit mean species model
       mod1 = rma.mv(yi = yi
@@ -694,21 +673,52 @@ for (term in terms) {
                     , sparse = T
                     # , verbose = T
       )
-
+    
       
-      # fit mean species model with reduced data
-      mod1_x = rma.mv(yi = yi
-                    , V = vi
-                    , mods = ~ tLatitude
-                    , random = list(~ 1 | site/sp)
-                    , method = "REML"
-                    , data = dat_reduced
-                    , control=list(optimizer = "optimParallel"
-                                   , ncpus = ncpu_meta
-                                   , sigma2.init = start_sigma)
-                    , sparse = T
-                    # , verbose = T
-      )
+      # reduced data models only for main run
+      if (run == "main") {
+        
+        # Cooks distance
+        # how much the whole regression model would change if ith case is removed
+        D = cooks.distance(mod, reestimate = F, ncpus = ncpu_meta, parallel = "snow", progbar = F)
+        exclude = D>0.005
+        dat_reduced = dat[!(exclude | is.na(exclude)), ]
+        
+        
+        # fit abundance-mediated model with reduced data
+        mod_x = rma.mv(yi = yi
+                       , V = vi
+                       , mods = ~ tLatitude * tAbundance
+                       , random = list(~ 1 | site/sp)
+                       , method = "REML"
+                       , data = dat_reduced
+                       , control=list(optimizer = "optimParallel"
+                                      , ncpus = ncpu_meta
+                                      , sigma2.init = start_sigma)
+                       , sparse = T
+                       # , verbose = T
+        )
+        
+        # fit mean species model with reduced data
+        mod1_x = rma.mv(yi = yi
+                        , V = vi
+                        , mods = ~ tLatitude
+                        , random = list(~ 1 | site/sp)
+                        , method = "REML"
+                        , data = dat_reduced
+                        , control=list(optimizer = "optimParallel"
+                                       , ncpus = ncpu_meta
+                                       , sigma2.init = start_sigma)
+                        , sparse = T
+                        # , verbose = T
+        )
+        
+      } else {
+        
+        mod_x = mod1_x = NA
+        
+      }
+      
       
       
       # fit model with tradeoff axes
@@ -786,8 +796,8 @@ rm(mod_list_red, mod_list)
 # Figure 2 ----------------------------------------------------------------
 
 
-# 1) reduced model (without abundance)
-# 2-4) CNDD against abundance at three latitudes: in color and at specified lats
+# a) reduced model (without abundance)
+# b) CNDD against abundance at three latitudes: in color and at specified lats
 
 # full dataset
 pdf(paste0(path_meta, run, "/Fig2.pdf")
@@ -843,49 +853,50 @@ for (i in 1:length(res[[run]])) {
 dev.off()
 
 
-# reduced dataset
-pdf(paste0(path_meta, run, "/Fig2_reduced_data.pdf")
-    , height = 7)
+# reduced dataset (only for main run)
+if (run == "main") {
 
-# loop through CNDD definitions
-for (i in 1:length(res[[run]])) {
-
-  # get results
-  res_i = lapply(res, "[[", i)
-
-  # generate predictions
-  preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1x", pvalue = T)
-  preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0x", pvalue = T)
-
-  # combine y limits
-  ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
-                 unlist(lapply(preds_abund, function(x) x[[1]]$ylim))))
-
-  # plotting
-  layout(matrix(c(1, 1, 1, 2, 3, 4), ncol = 3, byrow = T))
-  par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
-
-  # only latitude model
-  plot_latitude(preds_lat
-                , labelsx = 1, labelsy = 1
-                , ylim = ylim
-                , col = "black"
-                , panel = "a")
-
-  # latitude*abundance model
-  col = cols[match(cut(latitudes, breaks = lat_breaks, right = F), cuts_levels)]
-  plot_abundance(preds_abund
-                 , latitude_names = latitude_names
-                 , labelsx = 2, labelsy = 1
-                 , ylim = ylim
-                 , col_lat = col
-                 , panel = "b")
-
+  pdf(paste0(path_meta, run, "/Fig2_reduced_data.pdf")
+      , height = 7)
+  
+  # loop through CNDD definitions
+  for (i in 1:length(res[[run]])) {
+    
+    # get results
+    res_i = lapply(res, "[[", i)
+    
+    # generate predictions
+    preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1x", pvalue = T)
+    preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0x", pvalue = T)
+    
+    # combine y limits
+    ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
+                   unlist(lapply(preds_abund, function(x) x[[1]]$ylim))))
+    
+    # plotting
+    layout(matrix(c(1, 1, 1, 2, 3, 4), ncol = 3, byrow = T))
+    par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
+    
+    # only latitude model
+    plot_latitude(preds_lat
+                  , labelsx = 1, labelsy = 1
+                  , ylim = ylim
+                  , col = "black"
+                  , panel = "a")
+    
+    # latitude*abundance model
+    col = cols[match(cut(latitudes, breaks = lat_breaks, right = F), cuts_levels)]
+    plot_abundance(preds_abund
+                   , latitude_names = latitude_names
+                   , labelsx = 2, labelsy = 1
+                   , ylim = ylim
+                   , col_lat = col
+                   , panel = "b")
+    
+  }
+  dev.off()
+  
 }
-dev.off()
-
-
-
 
 
 
@@ -959,9 +970,17 @@ dev.off()
 # Write CNDD model summaries ----------------------------------------------
 
 
+if (run == "main") {
+  
+  # reduced dataset models only for main run
+  settings = data.frame(names = c("mod0", "mod1", "mod2", "mod3", "mod0x", "mod1x")
+                        , labels = c("main", "noabund", "tradeoffs", "demography", "main_reduced", "noabund_reduced"))
+  
+} else {
+  settings = data.frame(names = c("mod0", "mod1", "mod2", "mod3")
+                        , labels = c("main", "noabund", "tradeoffs", "demography"))
+}
 
-settings = data.frame(names = c("mod0", "mod1", "mod2", "mod3", "mod0x", "mod1x")
-                      , labels = c("main", "noabund", "tradeoffs", "demography", "main_reduced", "noabund_reduced"))
 
 for (i in settings$names) {
 
