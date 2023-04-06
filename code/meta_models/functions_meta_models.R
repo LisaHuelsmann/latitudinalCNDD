@@ -578,7 +578,8 @@ plot_latitude = function(preds
       # p-value
       if (!is.null(preds[[run]][[as.character(abundances[i])]]$pvalue)) {
         text(preds[[run]][[as.character(abundances[i])]]$x_poly[1]
-             , rev(preds[[run]][[as.character(abundances[i])]]$pred_poly)[1]
+             , 1.5*preds[[run]][[as.character(abundances[i])]]$pred_line[1] - 
+               0.5*rev(preds[[run]][[as.character(abundances[i])]]$pred_poly)[1]
              , preds[[run]][[as.character(abundances[i])]]$pvalue
              , cex = 1
              , adj = c(0, 1))
@@ -694,8 +695,9 @@ plot_abundance = function(preds
       
       # p-value
       if (!is.null(preds[[run]][[as.character(latitudes[i])]]$pvalue)) {
-        text(transAbund(preds[[run]][[as.character(latitudes[i])]]$x_poly[1], ref_abund),
-             rev(preds[[run]][[as.character(latitudes[i])]]$pred_poly)[1]
+        text(transAbund(preds[[run]][[as.character(latitudes[i])]]$x_poly[1], ref_abund)
+             , 1.5*preds[[run]][[as.character(latitudes[i])]]$pred_line[1] - 
+               0.5*rev(preds[[run]][[as.character(latitudes[i])]]$pred_poly)[1]
              , preds[[run]][[as.character(latitudes[i])]]$pvalue
              , cex = 1
              , adj = c(0, 1))
