@@ -217,6 +217,7 @@ for (i in c("logit_survival", "log1p_growth")) {
                 , xlab = "abundance (N/ha)", ylab = gsub("_", " ", i)
                 , transformation = function(x) x^.5
                 , xaxt = "n"
+                , nrpoints = 0
                 )
   axis(1, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
   
@@ -250,6 +251,7 @@ smoothScatter(M$abs_latitude, M$log_abundance
               , ylab = "abundance (N/ha)", xlab = "latitude (°)"
               , transformation = function(x) x^.5
               , yaxt = "n"
+              , nrpoints = 0
               )
 axis(2, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
 
