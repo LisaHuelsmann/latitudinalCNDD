@@ -64,6 +64,9 @@ latitude_names = c("Tropical", "Subtropical", "Temperate")
 latitudes = c(11.75, 29.25, 45)
 lat_breaks = seq(0, 52, 1)
 
+# abundances for plotting
+abundance = c(1, 10, 100)
+
 
 
 # Transformations ---------------------------------------------------------
@@ -899,6 +902,41 @@ if (run == "main") {
   dev.off()
   
 }
+
+
+# alternative model representation
+# CNDD against latitude for three different abundances
+
+# full dataset
+pdf(paste0(path_meta, run, "/Fig2_alternative.pdf")
+    , height = 4)
+
+# loop through CNDD definitions
+for (i in 1:length(res[[run]])) {
+  
+  # get results
+  res_i = lapply(res, "[[", i)
+  
+  # generate predictions
+  preds_lat = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0", pvalue = T)
+  
+  # combine y limits
+  ylim = range(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)), na.rm = T)
+               
+  # plotting
+  layout(matrix(c(1, 2, 3), ncol = 3, byrow = T))
+  par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
+  
+  
+  # latitude*abundance model
+  plot_latitude(preds_lat
+                , labelsx = 2, labelsy = 1
+                , ylim = ylim
+                , col = "black")
+  
+  
+}
+dev.off()
 
 
 

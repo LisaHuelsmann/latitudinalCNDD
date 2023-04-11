@@ -368,7 +368,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
 
 get_predictions_latitude = function(x
                                     , select = "mod0"
-                                    , abundances = c(1, 100, 1000)
+                                    , abundances = c(1, 10, 1000)
                                     , pvalue = F) {
   
   # extract model
@@ -510,7 +510,6 @@ get_predictions_abundance = function (x
 plot_latitude = function(preds
                          , names = NULL
                          , col_run = NULL
-                         , abundances = c(1, 100, 1000)
                          , labelsx = "outer"
                          , labelsy = "outer"
                          , xlim = NULL
@@ -548,6 +547,12 @@ plot_latitude = function(preds
                                        , cex = 3/2
                                        , xpd=NA)
     
+    # abundance label
+    graphics::text(xlim[2], 0.9*ylim[2]
+                   , paste0("Species abundance\n", abundances[i], " trees / ha")
+                   , adj = 1, pos = 2)
+    
+    # axes
     axis(1)
     if (i == 1) axis(2) else axis(2, labels = F)
     abline(h = 0, col = "grey")
@@ -556,7 +561,7 @@ plot_latitude = function(preds
     if (i %in% labelsx) {
       mtext("absolute latitude (°)", 1, 2.5, cex = 2/3)
     }
-    if (i %in% labelsx) {
+    if (i %in% labelsy) {
       unit = ifelse(type == "AME", "(% / year)", "(%)")
       mtext(paste("stabilizing CNDD", unit), 2, 3.5, las = 0, cex = 2/3)
     }
@@ -675,14 +680,16 @@ plot_abundance = function(preds
                                        , cex = 3/2
                                        , xpd=NA)
     
+    # latitude label
     if (is.null(latitude_names)) {
-      graphics::text(transAbund(xlim, ref_abund)[2], 0.8*ylim[2], paste0("Latitude\n", latitudes[i], "°"), 
+      graphics::text(transAbund(xlim, ref_abund)[2], 0.9*ylim[2], paste0("Latitude\n", latitudes[i], "°"), 
                      adj = 1, pos = 2)
     } else {
-      graphics::text(transAbund(xlim, ref_abund)[2], 0.8*ylim[2], paste0(latitude_names[i], "\n", latitudes[i], "°"), 
+      graphics::text(transAbund(xlim, ref_abund)[2], 0.9*ylim[2], paste0(latitude_names[i], "\n", latitudes[i], "°"), 
                      adj = 1, pos = 2)
     }
     
+    # axes
     axis(1, transAbund(c(0.1, 1, 10, 100, 1000, 10000), ref_abund), labels = F)
     axis(1, transAbund(c(0.1, 10, 1000), ref_abund), labels = c(0.1, 10, 1000), tick = F)
     
