@@ -580,23 +580,43 @@ plot_latitude = function(preds
       
       # p-value
       if (!is.null(pred_run$pvalue)) {
-        text(pred_run$x_poly[1]
-             , pred_run$pred_line[1] + 0.8*(rev(pred_run$pred_poly)[1] - pred_run$pred_line[1])
+        par(xpd = NA)
+        
+        # define location
+        xloc = pred_run$x_poly[1]
+        yloc = pred_run$pred_line[1] + 0.8*(rev(pred_run$pred_poly)[1] - pred_run$pred_line[1])
+        yloc = ifelse(yloc < ylim[2], yloc, ylim[2])
+        yloc = ifelse(yloc > ylim[1], yloc, ylim[1])
+        
+        # print p-value
+        text(xloc
+             , yloc
              , pred_run$pvalue
              , cex = 1
              , adj = c(0, 1))
+        par(xpd = F)
       }
       
       # add run name if i == 1
-      if (i == 1) text(min(pred_run$x_poly)
-                       , ifelse((which(runs == run) %% 2) == 0
-                                , min(pred_run$pred_poly)
-                                , max(pred_run$pred_poly))
-                       , names[which(runs == run)]
-                       , col = col
-                       , adj = c(0, ifelse((which(runs == run) %% 2) == 0, 1, 0))
-                       , cex = 0.7
-      )
+      if (i == 1) {
+        par(xpd = NA)
+        
+        # define location for labels
+        xloc = min(pred_run$x_poly)
+        yloc = ifelse((which(runs == run) %% 2) == 1
+                      , pred_run$pred_poly[length(pred_run$pred_poly)]
+                      , pred_run$pred_poly[1])
+        yloc = ifelse(yloc < ylim[2], yloc, ylim[2])
+        yloc = ifelse(yloc > ylim[1], yloc, ylim[1])
+        text(xloc
+             , yloc
+             , names[which(runs == run)]
+             , col = col
+             , adj = c(0, ifelse((which(runs == run) %% 2) == 0, 1, 0))
+             , cex = 0.8
+        )
+        par(xpd = F)
+      }
     }
   }
   
@@ -700,23 +720,43 @@ plot_abundance = function(preds
       
       # p-value
       if (!is.null(pred_run$pvalue)) {
-        text(transAbund(pred_run$x_poly[1], ref_abund)
-             , pred_run$pred_line[1] + 0.8*(rev(pred_run$pred_poly)[1] - pred_run$pred_line[1])
+        par(xpd = NA)
+        
+        # define location
+        xloc = transAbund(pred_run$x_poly[1], ref_abund)
+        yloc = pred_run$pred_line[1] + 0.8*(rev(pred_run$pred_poly)[1] - pred_run$pred_line[1])
+        yloc = ifelse(yloc < ylim[2], yloc, ylim[2])
+        yloc = ifelse(yloc > ylim[1], yloc, ylim[1])
+        
+        # print p-value
+        text(xloc
+             , yloc
              , pred_run$pvalue
              , cex = 1
              , adj = c(0, 1))
+        par(xpd = F)
       }
       
       # add run name if i == 1
-      if (i == 1) text(min(transAbund(pred_run$x_poly, ref_abund))
-                       , ifelse((which(runs == run) %% 2) == 0
-                                , min(pred_run$pred_poly)
-                                , max(pred_run$pred_poly))
-                       , names[which(runs == run)]
-                       , col = col
-                       , adj = c(0, ifelse((which(runs == run) %% 2) == 0, 1, 0))
-                       , cex = 0.7
-      )
+      if (i == 1) {
+        par(xpd = NA)
+        
+        # define location for labels
+        xloc = min(transAbund(pred_run$x_poly, ref_abund))
+        yloc = ifelse((which(runs == run) %% 2) == 1
+                      , pred_run$pred_poly[length(pred_run$pred_poly)]
+                      , pred_run$pred_poly[1])
+        yloc = ifelse(yloc < ylim[2], yloc, ylim[2])
+        yloc = ifelse(yloc > ylim[1], yloc, ylim[1])
+        text(xloc
+             , yloc
+             , names[which(runs == run)]
+             , col = col
+             , adj = c(0, ifelse((which(runs == run) %% 2) == 0, 1, 0))
+             , cex = 0.8
+        )
+        par(xpd = F)
+      }
     }
     
   }
