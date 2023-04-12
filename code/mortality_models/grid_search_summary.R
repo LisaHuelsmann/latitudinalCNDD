@@ -286,6 +286,7 @@ par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), las = 1)
 smoothScatter(sums_species$abs_latitude, sums_species$decay_con
               , xlab = "latitude (°)"
               , ylab = expression(paste("optimal ", mu, " con"))
+              , nrpoints = 0
 )
 
 
@@ -307,6 +308,7 @@ smoothScatter(log(sums_species$abundance), sums_species$decay_con
               , xlab = "abundance (N/ha)"
               , ylab = expression(paste("optimal ", mu, " con"))
               , xaxt = "n"
+              , nrpoints = 0
               )
 axis(1, at = log(10^(-1:4)), labels = 10^(-1:4), las = 1)
 
