@@ -550,7 +550,7 @@ plot_latitude = function(preds
     # abundance label
     if (length(abundances) > 1) {
       graphics::text(xlim[2], 0.9*ylim[2]
-                     , paste0("Species abundance\n", abundances[i], " (N/ha)")
+                     , paste0("Species abundance\n", abundances[i], " N/ha")
                      , adj = 1, pos = 2)
     }
     

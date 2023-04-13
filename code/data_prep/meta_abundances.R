@@ -58,7 +58,7 @@ dat %>%
   pivot_wider(id_cols = sp, 
               names_from = census,
               values_from = c(Nha, BAha),
-              values_fill = 0) %>% 
+              values_fill = 0) %>%          # complete with zeros
   pivot_longer(cols = -sp,
                names_to = c(".value", "census"),
                names_sep = "_") %>% 

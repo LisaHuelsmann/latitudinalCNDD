@@ -184,7 +184,7 @@ cbind(latitude = latitudes,
 
 # calculate predictions for rare and common species in the tropics (abundance-mediated CNDD model)
 latitudes = 11.75
-abundances = c(1, 1000)
+abundances = c(1, 100)
 newDat = cbind(transLat(latitudes, ref_lat = res$ref_lat)
                , transAbund(abundances, ref_abund = res$ref_abund)
                , transLat(latitudes, ref_lat = res$ref_lat)*transAbund(abundances, ref_abund = res$ref_abund))
@@ -200,7 +200,7 @@ cbind(abundances = abundances,
 
 # calculate predictions for rare and common species in temperate forests (abundance-mediated CNDD model)
 latitudes = 45
-abundances = c(1, 1000)
+abundances = c(1, 100)
 newDat = cbind(transLat(latitudes, ref_lat = res$ref_lat)
                , transAbund(abundances, ref_abund = res$ref_abund)
                , transLat(latitudes, ref_lat = res$ref_lat)*transAbund(abundances, ref_abund = res$ref_abund))
@@ -216,35 +216,35 @@ cbind(abundances = abundances,
 
 
 
-# calculate predictions for rare species in the tropics and temperate forests (abundance-mediated CNDD model)
-latitudes = c(11.75, 45)
-abundances = 1
-newDat = cbind(transLat(latitudes, ref_lat = res$ref_lat)
-               , transAbund(abundances, ref_abund = res$ref_abund)
-               , transLat(latitudes, ref_lat = res$ref_lat)*transAbund(abundances, ref_abund = res$ref_abund))
-predictions = predict(res$mod0, newmods = newDat, transf = backtrans)
-
-# print values
-cbind(abundances = abundances,
-      latitudes = latitudes,
-      pred = round(100 * predictions$pred, 2),
-      ci.lb = round(100 * predictions$ci.lb, 2),
-      ci.ub = round(100 * predictions$ci.ub, 2))
-
-
-# calculate predictions for common species in the tropics and temperate forests (abundance-mediated CNDD model)
-latitudes = c(11.75, 45)
-abundances = 1000
-newDat = cbind(transLat(latitudes, ref_lat = res$ref_lat)
-               , transAbund(abundances, ref_abund = res$ref_abund)
-               , transLat(latitudes, ref_lat = res$ref_lat)*transAbund(abundances, ref_abund = res$ref_abund))
-predictions = predict(res$mod0, newmods = newDat, transf = backtrans)
-
-# print values
-cbind(abundances = abundances,
-      latitudes = latitudes,
-      pred = round(100 * predictions$pred, 2),
-      ci.lb = round(100 * predictions$ci.lb, 2),
-      ci.ub = round(100 * predictions$ci.ub, 2))
+# # calculate predictions for rare species in the tropics and temperate forests (abundance-mediated CNDD model)
+# latitudes = c(11.75, 45)
+# abundances = 1
+# newDat = cbind(transLat(latitudes, ref_lat = res$ref_lat)
+#                , transAbund(abundances, ref_abund = res$ref_abund)
+#                , transLat(latitudes, ref_lat = res$ref_lat)*transAbund(abundances, ref_abund = res$ref_abund))
+# predictions = predict(res$mod0, newmods = newDat, transf = backtrans)
+# 
+# # print values
+# cbind(abundances = abundances,
+#       latitudes = latitudes,
+#       pred = round(100 * predictions$pred, 2),
+#       ci.lb = round(100 * predictions$ci.lb, 2),
+#       ci.ub = round(100 * predictions$ci.ub, 2))
+# 
+# 
+# # calculate predictions for common species in the tropics and temperate forests (abundance-mediated CNDD model)
+# latitudes = c(11.75, 45)
+# abundances = 100
+# newDat = cbind(transLat(latitudes, ref_lat = res$ref_lat)
+#                , transAbund(abundances, ref_abund = res$ref_abund)
+#                , transLat(latitudes, ref_lat = res$ref_lat)*transAbund(abundances, ref_abund = res$ref_abund))
+# predictions = predict(res$mod0, newmods = newDat, transf = backtrans)
+# 
+# # print values
+# cbind(abundances = abundances,
+#       latitudes = latitudes,
+#       pred = round(100 * predictions$pred, 2),
+#       ci.lb = round(100 * predictions$ci.lb, 2),
+#       ci.ub = round(100 * predictions$ci.ub, 2))
 
 

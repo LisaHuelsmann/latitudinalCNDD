@@ -142,14 +142,6 @@ nsp_global %>%
             n_species_fitted_as_rare_shrubs = sum(rare_stature == "Rare_shrub", na.rm = T),
             perc_mortality = round(100*sum(ndead)/sum(nobs), 1)) -> ext_data_table_2
 
-# global numbers (for text)
-nsp_global %>% 
-  mutate(nobs = ndead + nsurv) %>% 
-  summarise(n_mortality_observations = sum(nobs),
-            n_species = n(),
-            perc_species_fitted_individually = round(100-100*sum(!rare)/n_species, 1),
-            perc_mortality = round(100*sum(ndead)/sum(nobs), 1))
-
 
 # replace n_rare with 0 if model not converged
 rare_convergence = rAME_global[grepl("Rare", rAME_global$sp) & rAME_global$change == "equilibrium", c("site", "sp")]
@@ -191,5 +183,17 @@ doc_2 %>%
 print(my_doc, target = paste0(path_tables, run, "/extended_data_table_2.docx")) %>% invisible()
 
 
+
+
+# For text ----------------------------------------------------------------
+
+
+# global numbers (for text)
+nsp_global %>% 
+  mutate(nobs = ndead + nsurv) %>% 
+  summarise(n_mortality_observations = sum(nobs),
+            n_species = n(),
+            perc_species_fitted_individually = round(100-100*sum(!rare)/n_species, 1),
+            perc_mortality = round(100*sum(ndead)/sum(nobs), 1))
 
 

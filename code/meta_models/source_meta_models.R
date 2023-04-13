@@ -485,6 +485,34 @@ for (term in terms) {
   }
 }
 
+# Return summary of site-specific estimates
+sink(paste0(path_meta, run, "/site-specific.txt"))
+
+for (i in 1:length(sitemean_list)) {
+ 
+  change = sitemean_list[[i]]$change
+  type = sitemean_list[[i]]$type
+  out = sitemean_list[[i]]$out
+  
+  # run
+  cat(change, type, "\n")  
+  
+  # sites with negative average CNDD (works also for transformed values log1p(0) = 0)
+  cat("sites with negative average CNDD:\n")
+  cat("n =", sum(out$mean < 0), " ")
+  cat(out$site[which(out$mean < 0)], "\n")  
+  out = out[which(out$mean > 0), ] # only positive CNDD
+  
+  # sites with CV < 0.4
+  cat("sites with CV < 0.4:\n")
+  out$CV = out$sigma/out$mean
+  cat("n =", sum(out$CV < 0.4), " ")  
+  cat(out$site[which(out$CV < 0.4)], "\n")
+  
+  cat("\n")
+}
+sink()
+
 
 
 
