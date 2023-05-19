@@ -116,15 +116,16 @@ circular_coor = function(order, inner) {
   
 }
 
-format_pval = function(p, accuracy = 0.0000001, signdigits = 2, addp = T) {
+
+format_pval = function(p, addp = T) {
   
-  # rounding to signdigits
-  p_return = sapply(p, format, scientific = F, nsmall = signdigits, digits = signdigits)
-  if (addp) p_return = paste0("p=", p_return)
+  p_return = sfsmisc::pretty10exp(p, sub10 = c(-4, 4), digits = 2)
   
-  # smaller than accuracy
-  sel = p < accuracy
-  if (addp) p_return[sel] = paste0("p<", accuracy) else p_return[sel] = paste0("<", accuracy)
+  if (addp) {
+    for (i in seq(along = p_return)) {
+      p_return[[i]] <- substitute(p==pvalue, list(pvalue = p_return[[i]]))
+    }
+  }
   
   return(p_return)
 }
@@ -340,10 +341,10 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
         dat_outside = sums_global$nobs[sums_global$site == site & sums_global$sp %in% dat_meta$sp[outside]]
         dat_outside = sum(dat_outside)/sum(sums_global$nobs[sums_global$site == site])
         text(xlim[1], ylim[1]+0.02*ylim[2], paste0(round(100*dat_outside, 0), "% of data outside")
-             , cex = cex.text, adj = c(0, 0), col = "grey")
+             , cex = cex.text, adj = c(0, 0), col = "grey70")
       } else {
         text(xlim[1], ylim[1]+0.02*ylim[2], "no data outside"
-             , cex = cex.text, adj = c(0, 0), col = "grey")
+             , cex = cex.text, adj = c(0, 0), col = "grey70")
       }
       par(xpd = NA, new = T)
       text(0.95*xlim[1], ylim[2]-0.3*ylim[2]
@@ -557,7 +558,7 @@ plot_latitude = function(preds
     # axes
     axis(1)
     if (i == 1) axis(2) else axis(2, labels = F)
-    abline(h = 0, col = "grey")
+    abline(h = 0, col = "grey70")
     
     # inner labels
     if (i %in% labelsx) {
@@ -696,7 +697,7 @@ plot_abundance = function(preds
     axis(1, transAbund(c(0.1, 10, 1000), ref_abund), labels = c(0.1, 10, 1000), tick = F)
     
     if (latitudes[i] == latitudes[1]) axis(2) else axis(2, labels = F)
-    abline(h = 0, col = "grey")
+    abline(h = 0, col = "grey70")
     
     
     # inner labels

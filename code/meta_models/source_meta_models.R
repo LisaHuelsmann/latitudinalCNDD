@@ -13,6 +13,7 @@ library(optimParallel)
 library(purrr)
 library(effects)
 library(Hmisc)
+library(sfsmisc)
 library(sf)
 library(spData)
 library(spdep)
@@ -177,10 +178,10 @@ pdf(paste0(path_meta, run, "/demographic_tradeoffs.pdf")
 par(mfrow = c(1, 2))
 biplot(PCA, scale = F, cex = c(0.2, 1))
 plot(M_standardized[, c("tradeoff1", "tradeoff2")]
-     , pch = 16, cex = 0.5, col = "grey", xlim = c(-8, 8), ylim = c(-8, 8)
+     , pch = 16, cex = 0.5, col = "grey70", xlim = c(-8, 8), ylim = c(-8, 8)
      , xlab = "tradeoff1 (growth-mortality)"
      , ylab = "tradeoff2 (stature-recruitment)")
-abline(h = 0, v = 0, col = "grey")
+abline(h = 0, v = 0, col = "grey70")
 arrows(x0 = c(0), y0 = 0, x1 = 4*PCs_new[, 1], y1 = 4*PCs_new[, 2])
 dev.off()
 
@@ -371,12 +372,12 @@ for (term in terms) {
       # add map in center
       par(mar = c(0, 0, 0, 0), fig = c(0.34, 0.66, 0.35, 0.65), new = T)
       plot(st_geometry(dunia)
-           , col = "grey94"
+           , col = "grey90"
            , border = F
            , bg = NULL
            , xlim = c(st_bbox(dunia)[1]+5000000, st_bbox(dunia)[3]-1500000)
            , ylim = c(st_bbox(dunia)[2]+3000000, st_bbox(dunia)[4]))
-      plot(st_geometry(grat)[2:4], add = T, col = "grey94", lwd = 2, lty = 2)
+      plot(st_geometry(grat)[2:4], add = T, col = "grey90", lwd = 2, lty = 2)
       
       # connect panels and site coordinates
       par(xpd = NA, new = T)
@@ -384,8 +385,8 @@ for (term in terms) {
         coor_temp = st_coordinates(sites_sf)[sites_sf$ID == site_order[i], ]
         lines(c(grconvertX(multiCenter[i, 1], from = "ndc"), coor_temp[1])
               , c(grconvertY(multiCenter[i, 2], from = "ndc"), coor_temp[2])
-              , col = "lightgrey" # cols_order[i]
-              , lwd = 0.8
+              , col = "grey80"
+              , lwd = 0.75
         )
         
       }
@@ -405,7 +406,8 @@ for (term in terms) {
                                         , returnMod = T
                                         )
       temp = temp[order(names(temp))]
-      site_models[[paste(type, change)]] = as.data.frame(bind_rows(lapply(temp, function(x) try(broom::tidy(x))), .id = "site"))
+      site_models[[paste(type, change)]] = 
+        as.data.frame(bind_rows(lapply(temp, function(x) try(broom::tidy(x))), .id = "site"))
       
     }
   }
@@ -497,6 +499,12 @@ for (i in 1:length(sitemean_list)) {
   # run
   cat(change, type, "\n")  
   
+  # sites with NA CNDD
+  cat("sites with NA CNDD:\n")
+  cat("n =", sum(is.na(out$mean)), " ")
+  cat(out$site[which(is.na(out$mean))], "\n")  
+  out = out[which(!is.na(out$mean)), ] # only non NA
+  
   # sites with negative average CNDD (works also for transformed values log1p(0) = 0)
   cat("sites with negative average CNDD:\n")
   cat("n =", sum(out$mean < 0), " ")
@@ -558,7 +566,7 @@ for (i in 1:length(sitemean_list)) {
           , c(pred$fit + 1.96*pred$se.fit, rev(pred$fit - 1.96*pred$se.fit))
           , col = add.alpha("black", 0.05)
           , border = F)
-  abline(h = 0.4, col = "grey", lty = 2)
+  abline(h = 0.4, col = "grey70", lty = 2)
   text(lats[1], pred$fit[1] + 0.1
        , paste0("p=", round(summary(fit)$coef[2, 4], 2))
        , adj = 0)
@@ -577,8 +585,8 @@ for (i in 1:length(sitemean_list)) {
   mtext("standard deviation of CNDD (transformed scale)", 2, line = 4)
   segments(out$ci.lb, out$sigma, out$ci.ub, out$sigma, col = out$col)
   for (cv in c(0.2, 0.4, 0.6)) {
-    lines(seq(0, max(out$ci.ub), len = 10), cv*seq(0, max(out$ci.ub), len = 10), col = "grey")
-    text(0.9*max(out$ci.ub), 1.1*cv*max(out$sigma), paste0("CV = ", cv), col = "grey")
+    lines(seq(0, max(out$ci.ub), len = 10), cv*seq(0, max(out$ci.ub), len = 10), col = "grey70")
+    text(0.9*max(out$ci.ub), 1.1*cv*max(out$sigma), paste0("CV = ", cv), col = "grey70")
   }
   
   text(grconvertX(0.02, from = "ndc")
@@ -1070,9 +1078,11 @@ for (i in settings$names) {
     # collect model summary
     tbl_regression(x[[i]]
                    , estimate_fun = ~style_sigfig(., digits = digits)
-                   , pvalue_fun = ~format_pval(., addp = F)) %>%
+                   , pvalue_fun = function(x) case_when(is.na(x) ~ NA_character_,
+                                                        x < 0.0001 ~ format(x, digits = 2, scientific = TRUE),
+                                                        x >= 0.0001 ~ formatC(signif(x, digits = 2), digits = 2))
+                   ) %>%
       bold_p() %>%
-      # bold_labels() %>%
       as_flex_table() %>%
       set_caption(caption = paste("CNDD assessed as", x$type, "in", x$term, "calculated at", x$change,
                                   "densities in %.", "Fitted with", class(x$mod0)[1])) %>%
@@ -1097,9 +1107,9 @@ for (i in settings$names) {
       theme_booktabs()
   })
   
-  my_doc <- read_docx()
 
   # use walk (the invisible function of map) to include all tables in one doc
+  my_doc <- read_docx()
   walk(my_list, write_word_table, my_doc)
   print(my_doc, target = paste0(path_meta, run, "/model_summaries_"
                                 , settings$labels[which(settings$names == i)], ".docx")) %>% invisible()
@@ -1110,6 +1120,9 @@ for (i in settings$names) {
 
 # IQR ---------------------------------------------------------------------
 
+
+# collect means and CI
+iqr_res = list()
 
 # only when iqr result is available
 if (sum(AMEsums_global$change == "iqr") > 0) {
@@ -1148,7 +1161,7 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
            , xlab = paste("stabilizing CNDD", unit)
            , xlim = xlim
            , breaks = breaks
-           , border = "grey"
+           , border = "grey70"
            , ylim = ylim)
       abline(v = 0)
       
@@ -1180,7 +1193,7 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
                    , sparse = T
                    # , verbose = T
       )
-      summary(mod)
+
       CI = predict(mod, transf = backtrans)
       arrows(CI$ci.lb*100, ylim[2]*0.6, CI$ci.ub*100, ylim[2]*0.6, angle = 90, code = 3, length = 0.04)
       points(backtrans(coef(mod))*100, ylim[2]*0.6
@@ -1188,17 +1201,32 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
       text(qs[2]*2, ylim[2]*0.6, paste0("mean CNDD from meta-regression \nat "
                                         , round(backtrans(coef(mod))*100, 2), " % ", interpretation)
            , cex = 0.7, adj = 0)
-      
+      iqr_res[[paste(term, type, sep = "_")]] = c(mean =  backtrans(coef(mod))*100
+                                                  , ci.lb = CI$ci.lb*100
+                                                  , ci.ub = CI$ci.ub*100)
       
       # number of estimates outside
       text(xlim[1], ylim[1]+0.92*ylim[2], paste0(round(100*outside, 0), "% of estimates outside")
-           , cex = 0.6, adj = c(0, 0), col = "grey")
+           , cex = 0.6, adj = c(0, 0), col = "grey70")
       
     }
   }
   
   dev.off()
-  
-}
 
+  # Return mean and CI of iqr results
+  sink(paste0(path_meta, run, "/iqr.txt"))
+  
+  for (i in 1:length(iqr_res)) {
+    
+    cat(names(iqr_res[i]), "\n")
+    cat(names(iqr_res[[i]]), "\n")
+    cat(iqr_res[[i]], "\n", "\n")
+    c
+    
+  }
+  sink()
+  
+    
+}
 

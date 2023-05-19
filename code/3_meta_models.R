@@ -198,6 +198,7 @@ cbind(abundances = abundances,
       ci.ub = round(100 * predictions$ci.ub, 2))
 
 
+
 # calculate predictions for rare and common species in temperate forests (abundance-mediated CNDD model)
 latitudes = 45
 abundances = c(1, 100)
