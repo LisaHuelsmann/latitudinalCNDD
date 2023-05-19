@@ -9,7 +9,27 @@ library(flextable)
 library(officer)
 
 
-# create folder for output
+
+# Define location of input and output -------------------------------------
+
+# if not stated otherwise, load and save from/in repo folders
+
+
+# Data prep input
+if (!exists("path_input")) path_input = "data_prep/input/"
+
+# Data prep output
+if (!exists("path_output")) path_output = "data_prep/output/"
+
+# Analysis outputs
+if (!exists("path_mortality")) path_mortality = "out/mortality_models/"
+if (!exists("path_meta")) path_meta = "out/meta_models/"
+
+# Tables
+if (!exists("path_tables")) path_meta = "out/tables/"
+
+
+# create folder for tables
 dir.create(path_tables)
 
 
