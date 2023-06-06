@@ -152,6 +152,7 @@ sums_global %>%
             log1p_growth = log1p(incr_median),
             logit_survival = qlogis(1-mort_rate),
             log_size = log(dbh_q90)) -> M
+M$log1p_growth[is.na(M$log1p_growth)] = 0
 
 # calculate standardized demographic rates per site
 M %>% 
@@ -366,7 +367,7 @@ for (term in terms) {
       mtext(paste("stabilizing CNDD", unit), side = 2, line = -0.1, outer = T, cex = 0.6)
       
       # circular coordinates
-      multiCoords = circular_coor(order = site_order, inner = 7)
+      multiCoords = circular_coor(order = site_order, inner = ifelse(length(site_order) == 23, 7, 5))
       multiCenter = cbind(rowMeans(multiCoords[, 1:2]), rowMeans(multiCoords[, 3:4]))
       
       # add map in center

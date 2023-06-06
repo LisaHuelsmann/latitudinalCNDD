@@ -4,7 +4,7 @@ This repository contains the code to reproduce the analyses by Hülsmann et al.,
 
 The repository holds the folders [**code**](/code) (all Rscripts), [**data_prep**](/data_prep) (input and derived output data to run the analyses) and [**reproducibility_exports**](/reproducibility_exports) (CNDD estimates to reproduce the main meta-regressions). Moreover, when running the analysis pipeline, a folder **out** will be created with the results of mortality models, meta-regressions, and tables for the Extended Data.
 
-Because tree data from most ForestGEO sites cannot be made freely available, we generated 'fake sites' based on small samples of the dataset from Barro Colorado Island (BCI, Panama) available [here](https://datadryad.org/stash/dataset/doi:10.15146/5xcp-0d46). These fake sites were artificially aligned along a latitudinal gradient to be able to run the full analysis pipeline.
+Because tree data from most ForestGEO sites cannot be made freely available, we generated 'fake sites' based on small samples of the dataset from Barro Colorado Island (BCI, Panama) available [here](https://datadryad.org/stash/dataset/doi:10.15146/5xcp-0d46). These fake sites were artificially aligned along a latitudinal gradient to be able to run the full analysis pipeline (*June 6 2023: Note that the meta-analyses scripts are not yet fully working because the reduced dataset is too small).*
 
 ## Methodology
 
