@@ -67,6 +67,7 @@ lat_breaks = seq(0, 52, 1)
 
 # abundances for plotting
 abundance = c(1, 10, 100)
+# approximately 0.05, 0.5 and 0.95 quantiles
 
 
 
@@ -213,7 +214,10 @@ for (type in types) {
 
 
 pdf(paste0(path_meta, run, "/data_overview.pdf")
-    , height = 8, width = 8)
+    , height = 130/25.4
+    , width = 136/25.4   # column-and-a-half
+    , pointsize = 7
+)
 
 # plot abundance vs demography
 par(mfrow = c(2, 2))
@@ -242,12 +246,14 @@ for (i in c("logit_survival", "log1p_growth")) {
 text(grconvertX(0.02, from = "ndc")
      , grconvertY(0.98, from = "ndc")
      , labels = "a"
-     , cex = 3/2
+     , cex = 8/7
+     , font = 2
      , xpd=NA)
 text(grconvertX(0.5, from = "ndc")
      , grconvertY(0.98, from = "ndc")
      , labels = "b"
-     , cex = 3/2
+     , cex = 8/7
+     , font = 2
      , xpd=NA)
 
 
@@ -277,7 +283,8 @@ for (qu in c(0.25, 0.5, 0.75)) {
 text(grconvertX(0.02, from = "ndc")
      , grconvertY(0.45, from = "ndc")
      , labels = "c"
-     , cex = 3/2
+     , cex = 8/7
+     , font = 2
      , xpd=NA)
 
 dev.off()
@@ -387,7 +394,7 @@ for (term in terms) {
         lines(c(grconvertX(multiCenter[i, 1], from = "ndc"), coor_temp[1])
               , c(grconvertY(multiCenter[i, 2], from = "ndc"), coor_temp[2])
               , col = "grey80"
-              , lwd = 0.75
+              , lwd = 0.8
         )
         
       }
@@ -402,13 +409,13 @@ for (term in terms) {
                                         , trans = get(paste0("trans_", type))
                                         , backtrans = get(paste0("backtrans_", type))
                                         , multiCoords = multiCoords
-                                        , cols = cols_order, color.axes = "black" # "grey30"
+                                        , cols = cols_order
+                                        , color.axes = "black"
                                         , markRare = T
                                         , returnMod = T
                                         )
       temp = temp[order(names(temp))]
-      site_models[[paste(type, change)]] = 
-        as.data.frame(bind_rows(lapply(temp, function(x) try(broom::tidy(x))), .id = "site"))
+      site_models[[paste(type, change)]] = as.data.frame(bind_rows(lapply(temp, function(x) try(broom::tidy(x))), .id = "site"))
       
     }
   }
@@ -527,13 +534,17 @@ sink()
 
 
 
-# Figure 3 ----------------------------------------------------------------
+# Figure 4 ----------------------------------------------------------------
 
 
+# Prediction 3
 
+pdf(paste0(path_meta, run, "/Fig4.pdf")
+    , height = 100/25.4
+    , width = 183/25.4  # double column 
+    , pointsize = 7
+)
 
-pdf(paste0(path_meta, run, "/Fig3.pdf")
-    , height = 5.5, width = 11)
 
 for (i in 1:length(sitemean_list)) {
   
@@ -549,15 +560,18 @@ for (i in 1:length(sitemean_list)) {
   out = out[which(out$mean > 0), ]
   
   
-  par(mfrow = c(1, 2), mar = c(5, 4, 3, 1))
+  par(mfrow = c(1, 2)
+      , mar = c(4, 5, 3, 1))
   
   # a) plot coefficient of variation against latitude
-  plot(CV ~ abs(latitude), out
-       , col = out$col, pch = 16, las = 1
+  plot(CV ~ abs(latitude)
+       , out
+       , las = 1
        , ylim = c(0, max(out$CV))
        , xlab = "absolute latitude (°)"
        , ylab = "coefficient of variation of CNDD"
-       , bty='l'
+       , bty = 'l'
+       , type = 'n'
   )
   fit = lm(CV ~ abs(latitude), out)
   lats = seq(0, max(out$latitude))
@@ -566,39 +580,65 @@ for (i in 1:length(sitemean_list)) {
   polygon(c(lats, rev(lats))
           , c(pred$fit + 1.96*pred$se.fit, rev(pred$fit - 1.96*pred$se.fit))
           , col = add.alpha("black", 0.05)
-          , border = F)
-  abline(h = 0.4, col = "grey70", lty = 2)
-  text(lats[1], pred$fit[1] + 0.1
+          , border = F
+  )
+  abline(h = 0.4
+         , col = "grey70"
+         , lty = 2
+  )
+  points(CV ~ abs(latitude), out
+         , col = out$col
+         , pch = 16
+  )
+  text(lats[1]
+       , pred$fit[1] + 0.15
        , paste0("p=", round(summary(fit)$coef[2, 4], 2))
-       , adj = 0)
+       , adj = 0
+       , cex = 6/7
+  )
   
   
   # b) plot standard deviation against mean (transformed scale)
-  par(mar = c(5, 6, 3, 1))
-  plot(sigma ~ mean, out
-       , col = out$col, pch = 16
+  par(mar = c(4, 5, 3, 1))
+  plot(sigma ~ mean
+       , out
        , xlim = range(c(out$ci.lb, out$ci.ub))
        , ylim = c(0, max(out$sigma))
        , xlab = "mean CNDD (transformed scale)"
        , ylab = ""
-       , bty='l'
-       , las = 1)
+       , bty = 'l'
+       , las = 1
+       , type = 'n'
+  )
   mtext("standard deviation of CNDD (transformed scale)", 2, line = 4)
-  segments(out$ci.lb, out$sigma, out$ci.ub, out$sigma, col = out$col)
+  
+  # Lines with same CV
   for (cv in c(0.2, 0.4, 0.6)) {
-    lines(seq(0, max(out$ci.ub), len = 10), cv*seq(0, max(out$ci.ub), len = 10), col = "grey70")
-    text(0.9*max(out$ci.ub), 1.1*cv*max(out$sigma), paste0("CV = ", cv), col = "grey70")
+    lines(seq(0, max(out$ci.ub), len = 10)
+          , cv*seq(0, max(out$ci.ub), len = 10)
+          , col = "grey70")
+    text(max(out$ci.ub)
+         , cv*max(out$ci.ub) + 0.01*max(out$sigma)
+         , paste0("CV = ", cv)
+         , col = "grey70"
+         , adj = c(1, 0)
+         , cex = 6/7)
   }
   
-  text(grconvertX(0.02, from = "ndc")
-       , grconvertY(0.98, from = "ndc")
-       , labels = "a"
-       , cex = 3/2
-       , xpd=NA)
-  text(grconvertX(0.5, from = "ndc")
-       , grconvertY(0.98, from = "ndc")
-       , labels = "b"
-       , cex = 3/2
+  # Means and sigmas of CNDD estimates
+  segments(out$ci.lb, out$sigma, out$ci.ub, out$sigma, col = out$col)
+  points(sigma ~ mean
+         , out
+         , col = out$col
+         , pch = 16
+  )
+  
+  # add label for panels
+  text(grconvertX(c(0.02, 0.5), from = "ndc")
+       , grconvertY(c(0.98, 0.98), from = "ndc")
+       , labels = c("a", "b")
+       , cex = 8/7
+       , font = 2
        , xpd=NA)
   
 }
@@ -674,9 +714,7 @@ for (term in terms) {
       transLat = function(x, ref_lat)   (abs(x)-ref_lat)             #                                     and latitude = ref_lat
       dat_sel$tAbundance = transAbund(dat_sel$abundance, ref_abund)
       dat_sel$tLatitude = transLat(dat_sel$latitude, ref_lat)
-
-
-
+      
       # prepare escalc
       dat = escalc(measure = "GEN"
                    , yi = estimate
@@ -835,15 +873,20 @@ rm(mod_list_red, mod_list)
 
 
 
-# Figure 2 ----------------------------------------------------------------
+# Plot joint meta-regression results ----------------------------------------------------------------
 
 
-# a) reduced model (without abundance)
-# b) CNDD against abundance at three latitudes: in color and at specified lats
+# a) Prediction 1 CNDD against latitude
+# b) Prediction 2 CNDD against abundance at three latitudes: in color and at specified lats
+# c) Prediction 2 CNDD against latitude for three abundances
+
 
 # full dataset
-pdf(paste0(path_meta, run, "/Fig2.pdf")
-    , height = 7)
+pdf(paste0(path_meta, run, "/Meta_regressions.pdf")
+    , height = 190/25.4
+    , width = 136/25.4   # column-and-a-half
+    , pointsize = 7
+)
 
 # loop through CNDD definitions
 for (i in 1:length(res[[run]])) {
@@ -857,22 +900,26 @@ for (i in 1:length(res[[run]])) {
   # generate predictions
   preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1", pvalue = T)
   preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0", pvalue = T)
-
+  preds_lat_abund = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0", pvalue = T)
+  
   # combine y limits
   ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
                  unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
+                 unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim)),
                  backtrans(sitemean_list[[i]]$out$mean)*100), na.rm = T)
 
   # plotting
-  layout(matrix(c(1, 1, 1, 2, 3, 4), ncol = 3, byrow = T))
-  par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
+  layout(matrix(c(1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7), ncol = 3, byrow = T))
+  par(las = 1
+      , oma = c(3, 4, 0, 0)
+      , mar = c(2, 2, 3, 1)
+      , cex = 1)
 
   # only latitude model
   plot_latitude(preds_lat
                 , labelsx = 1, labelsy = 1
                 , ylim = ylim
-                , col = "black"
-                , panel = "a")
+                , col = "black")
   
   # add site-specific means
   out_trans = 100*backtrans(sitemean_list[[i]]$out[, c("mean", "sigma", "ci.lb", "ci.ub")])
@@ -882,15 +929,28 @@ for (i in 1:length(res[[run]])) {
          , pch = 16
          , col = add.alpha("black", 0.2))
   
-  # latitude*abundance model
+  # latitude*abundance model latitude-moderated
   col = cols[match(cut(latitudes, breaks = lat_breaks, right = F), cuts_levels)]
   plot_abundance(preds_abund
                  , latitude_names = latitude_names
                  , labelsx = 2, labelsy = 1
                  , ylim = ylim
-                 , col_lat = col
-                 , panel = "b")
-
+                 , col_lat = col)
+  
+  # latitude*abundance model abundance-moderated 
+  plot_latitude(preds_lat_abund
+                , labelsx = 2, labelsy = 1
+                , ylim = ylim
+                , col = "black")
+  
+  # add label for panels
+  text(grconvertX(c(0.02, 0.02, 0.02), from = "ndc")
+       , grconvertY(c(0.98, 0.48, 0.24), from = "ndc")
+       , labels = c("a", "b", "c")
+       , cex = 8/7
+       , font = 2
+       , xpd=NA)
+  
 }
 dev.off()
 
@@ -898,8 +958,11 @@ dev.off()
 # reduced dataset (only for main run)
 if (run == "main") {
 
-  pdf(paste0(path_meta, run, "/Fig2_reduced_data.pdf")
-      , height = 7)
+  pdf(paste0(path_meta, run, "/Meta_regressions_reduced_data.pdf")
+      , height = 190/25.4
+      , width = 136/25.4   # column-and-a-half
+      , pointsize = 7
+  )
   
   # loop through CNDD definitions
   for (i in 1:length(res[[run]])) {
@@ -910,30 +973,47 @@ if (run == "main") {
     # generate predictions
     preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1x", pvalue = T)
     preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0x", pvalue = T)
+    preds_lat_abund = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0x", pvalue = T)
     
     # combine y limits
     ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
-                   unlist(lapply(preds_abund, function(x) x[[1]]$ylim))))
+                   unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
+                   unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim))))
     
     # plotting
-    layout(matrix(c(1, 1, 1, 2, 3, 4), ncol = 3, byrow = T))
-    par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
+    layout(matrix(c(1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7), ncol = 3, byrow = T))
+    par(las = 1
+        , oma = c(3, 4, 0, 0)
+        , mar = c(2, 2, 3, 1)
+        , cex = 1)
     
     # only latitude model
     plot_latitude(preds_lat
                   , labelsx = 1, labelsy = 1
                   , ylim = ylim
-                  , col = "black"
-                  , panel = "a")
+                  , col = "black")
     
-    # latitude*abundance model
+    # latitude*abundance model latitude-moderated
     col = cols[match(cut(latitudes, breaks = lat_breaks, right = F), cuts_levels)]
     plot_abundance(preds_abund
                    , latitude_names = latitude_names
                    , labelsx = 2, labelsy = 1
                    , ylim = ylim
-                   , col_lat = col
-                   , panel = "b")
+                   , col_lat = col)
+    
+    # latitude*abundance model abundance-moderated 
+    plot_latitude(preds_lat_abund
+                  , labelsx = 2, labelsy = 1
+                  , ylim = ylim
+                  , col = "black")
+    
+    # add label for panels
+    text(grconvertX(c(0.02, 0.02, 0.02), from = "ndc")
+         , grconvertY(c(0.98, 0.64, 0.30), from = "ndc")
+         , labels = c("a", "b", "c")
+         , cex = 8/7
+         , font = 2
+         , xpd=NA)
     
   }
   dev.off()
@@ -941,12 +1021,18 @@ if (run == "main") {
 }
 
 
-# alternative model representation
-# CNDD against latitude for three different abundances
 
-# full dataset
-pdf(paste0(path_meta, run, "/Fig2_alternative.pdf")
-    , height = 4)
+
+
+# Figure 2 ----------------------------------------------------------------
+
+# Prediction 1
+
+pdf(paste0(path_meta, run, "/Fig2.pdf")
+    , height = 110/25.4
+    , width = 136/25.4   # column-and-a-half
+    , pointsize = 7
+    )
 
 # loop through CNDD definitions
 for (i in 1:length(res[[run]])) {
@@ -954,28 +1040,121 @@ for (i in 1:length(res[[run]])) {
   # get results
   res_i = lapply(res, "[[", i)
   
+  # back transformation
+  backtrans = get(paste0("backtrans_", res_i[[1]]$type))
+  
   # generate predictions
-  preds_lat = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0", pvalue = T)
+  preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1", pvalue = T)
   
   # combine y limits
-  ylim = range(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)), na.rm = T)
-               
+  ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
+                 backtrans(sitemean_list[[i]]$out$mean)*100), na.rm = T)
+  
   # plotting
-  layout(matrix(c(1, 2, 3), ncol = 3, byrow = T))
-  par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
+  par(las = 1, mar = c(4, 5, 1, 1))
   
-  
-  # latitude*abundance model
+  # only latitude model
   plot_latitude(preds_lat
-                , labelsx = 2, labelsy = 1
+                , labelsx = 1, labelsy = 1
                 , ylim = ylim
-                , col = "black")
+                , col = "black"
+  )
+  
+  # add site-specific means
+  out_trans = 100*backtrans(sitemean_list[[i]]$out[, c("mean", "sigma", "ci.lb", "ci.ub")])
+  out_trans = cbind(out_trans, sitemean_list[[i]]$out[, c("site", "latitude", "col")])
+  
+  # label sites
+  out_trans$site_names = paste(" ", Site_table$site[match(out_trans$site, Site_table$ID)], " ")
+  addTextLabels(abs(out_trans$latitude)
+                , out_trans$mean
+                , gsub('(.{1,30})(\\s|$)', '\\1\n', out_trans$site_names)
+                , cex.label = 5/7
+                , col.label = "grey40"
+                , col.line = "grey70"
+                , lwd = 0.8
+                , cex.pt = 0.9
+  )
+  
+  # dots
+  points(abs(out_trans$latitude)
+         , out_trans$mean
+         , pch = 16
+         , col = "grey40"
+  )
   
   
 }
 dev.off()
 
 
+
+
+
+
+# Figure 3 ----------------------------------------------------------------
+
+
+# Prediction 2
+
+# a) CNDD against abundance at three latitudes: in color and at specified lats
+# b) CNDD against latitude for three abundances
+
+
+pdf(paste0(path_meta, run, "/Fig3.pdf")
+    , height = 130/25.4
+    , width = 183/25.4  # double column 
+    , pointsize = 7
+)
+
+# loop through CNDD definitions
+for (i in 1:length(res[[run]])) {
+  
+  # get results
+  res_i = lapply(res, "[[", i)
+  
+  # back transformation
+  backtrans = get(paste0("backtrans_", res_i[[1]]$type))
+  
+  # generate predictions
+  preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0", pvalue = T)
+  preds_lat_abund = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0", pvalue = T)
+  
+  # combine y limits
+  ylim = range(c(unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
+                 unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim))))
+  
+  # plotting
+  layout(matrix(c(1, 2, 3, 4, 5, 6), ncol = 3, byrow = T))
+  par(las = 1
+      , oma = c(3, 4, 0, 0)
+      , mar = c(2, 2, 3, 1)
+      , cex = 1)
+  
+  # latitude*abundance model latitude-moderated
+  col = cols[match(cut(latitudes, breaks = lat_breaks, right = F), cuts_levels)]
+  plot_abundance(preds_abund
+                 , latitude_names = latitude_names
+                 , labelsx = 2, labelsy = 1
+                 , ylim = ylim
+                 , col_lat = col)
+  
+  # latitude*abundance model abundance-moderated 
+  plot_latitude(preds_lat_abund
+                , labelsx = 2, labelsy = 1
+                , ylim = ylim
+                , col = "black")
+  
+  # add label for panels
+  text(grconvertX(c(0.02, 0.02), from = "ndc")
+       , grconvertY(c(0.98, 0.48), from = "ndc")
+       , labels = c("a", "b")
+       , cex = 8/7
+       , font = 2
+       , xpd = NA)
+  
+}
+dev.off()
 
 
 
@@ -1130,9 +1309,14 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
   
   
   pdf(paste0(path_meta, run, "/iqr.pdf")
-      , height = 5.5, width = 11)
+      , height = 100/25.4
+      , width = 183/25.4  # double column 
+      , pointsize = 7
+  )
+  par(mfrow = c(1, 2)
+      , mar = c(4, 5, 3, 1)
+      , las = 1)
   
-  par(mfrow = c(1, 2), las = 1, mar = c(4, 4, 3, 1))
   change = "iqr"
   
   for (term in terms) {
@@ -1175,7 +1359,7 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
       text(qs[2]*2, ylim[2]*0.8, paste0("50 % of CNDD estimates between\n"
                                         , round(qs[1], 2), " and ", round(qs[2], 2)
                                         , " %\n", interpretation)
-           , cex = 0.7, adj = 0)
+           , cex = 6/7, adj = 0)
       
       
       
@@ -1201,14 +1385,17 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
              , pch = 18, cex = 1.4, col = "darkred")
       text(qs[2]*2, ylim[2]*0.6, paste0("mean CNDD from meta-regression \nat "
                                         , round(backtrans(coef(mod))*100, 2), " % ", interpretation)
-           , cex = 0.7, adj = 0)
+           , cex = 6/7
+           , adj = 0)
       iqr_res[[paste(term, type, sep = "_")]] = c(mean =  backtrans(coef(mod))*100
                                                   , ci.lb = CI$ci.lb*100
                                                   , ci.ub = CI$ci.ub*100)
       
       # number of estimates outside
       text(xlim[1], ylim[1]+0.92*ylim[2], paste0(round(100*outside, 0), "% of estimates outside")
-           , cex = 0.6, adj = c(0, 0), col = "grey70")
+           , cex = 5/7
+           , adj = c(0, 0)
+           , col = "grey70")
       
     }
   }

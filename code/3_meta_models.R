@@ -93,6 +93,10 @@ stopCluster(cl)
 latitude_names = c("Tropical", "Subtropical", "Temperate")
 latitudes = c(11.75, 29.25, 45)
 
+# abundances for plotting
+abundance = c(1, 10, 100)
+# approximately 0.05, 0.5 and 0.95 quantiles
+
 
 # Load fitted models, save in list res
 res = list()
@@ -103,10 +107,18 @@ for (run in runs) {
 
 
 
-# Fig 2 with three runs
+# Meta-regressions with three runs
+
+# a) Prediction 1 CNDD against latitude
+# b) Prediction 2 CNDD against abundance at three latitudes: in color and at specified lats
+# c) Prediction 2 CNDD against latitude for three abundances
+
 dir.create(paste0(path_meta, "comparison"))
 pdf(paste0(path_meta, "comparison/", "main_vs_randomized.pdf")
-    , height = 7)
+    , height = 190/25.4
+    , width = 136/25.4   # column-and-a-half
+    , pointsize = 7
+)
 
 # loop through CNDD definitions
 for (i in 1:length(res[[1]])) {
@@ -117,29 +129,46 @@ for (i in 1:length(res[[1]])) {
   # generate predictions for all runs
   preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1")
   preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0")
+  preds_lat_abund = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0")
 
   # combine y limits
   ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
-                 unlist(lapply(preds_abund, function(x) x[[1]]$ylim))))
+                 unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
+                 unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim))))
   
   # plotting
-  layout(matrix(c(1, 1, 1, 2, 3, 4), ncol = 3, byrow = T))
-  par(las = 1, oma = c(3, 4, 0, 0), mar = c(2, 2, 3, 1))
+  layout(matrix(c(1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7), ncol = 3, byrow = T))
+  par(las = 1
+      , oma = c(3, 4, 0, 0)
+      , mar = c(2, 2, 3, 1)
+      , cex = 1)
   
   # only latitude model
   plot_latitude(preds_lat, names = run_names
                 , labelsx = 1, labelsy = 1
                 , ylim = ylim
-                , col_run = c("black", "dodgerblue3", "firebrick")
-                , panel = "a")
+                , col_run = c("black", "dodgerblue3", "firebrick"))
   
-  # latitude abundance model
-  plot_abundance(preds_abund, names = run_names
+  # latitude*abundance model latitude-moderated
+  plot_abundance(preds_abund
                  , latitude_names = latitude_names
                  , labelsx = 2, labelsy = 1
                  , ylim = ylim
-                 , col_run = c("black", "dodgerblue3", "firebrick")
-                 , panel = "b")
+                 , col_run = c("black", "dodgerblue3", "firebrick"))
+  
+  # latitude*abundance model abundance-moderated 
+  plot_latitude(preds_lat_abund
+                , labelsx = 2, labelsy = 1
+                , ylim = ylim
+                , col_run = c("black", "dodgerblue3", "firebrick"))
+  
+  # add label for panels
+  text(grconvertX(c(0.02, 0.02, 0.02), from = "ndc")
+       , grconvertY(c(0.98, 0.48, 0.24), from = "ndc")
+       , labels = c("a", "b", "c")
+       , cex = 8/7
+       , font = 2
+       , xpd=NA)
   
 }
 dev.off()
