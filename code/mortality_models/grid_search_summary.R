@@ -114,7 +114,7 @@ table(sums_total$run, sums_total$nvalues)
 
 
 # plot against setting
-plot_map = function(run, term, type, criterion, optimum = T) {
+plot_map = function(run, term, type, criterion, optimum = T, main = T) {
   
   # prep matrix
   dat = sums_total[sums_total$run == run & sums_total$term == term & sums_total$decay_type == type, ]
@@ -125,15 +125,17 @@ plot_map = function(run, term, type, criterion, optimum = T) {
   image(unique(dat$decay_con), unique(dat$decay_tot), mat
         , col = viridis(128)
         , zlim = range(sums_total[, criterion])
-        , main = paste0(term, ", ", ifelse(type == "exp", "exponential", "exponential-normal"), " decay")
+        , main = ifelse(main
+                        , paste0(term, ", ", ifelse(type == "exp", "exponential", "exponential-normal"), " decay")
+                        , "")
         , axes = F
         , asp = 1
         , xlab = ""
         , ylab = ""
         , bty='l'
   )
-  axis(1, at = seq(0, 25, 5), pos = 0)
-  axis(2, at = seq(0, 25, 5), pos = 0)
+  axis(1, at = seq(0, 25, 5), pos = 0, cex.axis = 1)
+  axis(2, at = seq(0, 25, 5), pos = 0, cex.axis = 1)
   mtext(expression(paste(mu, " con")), side = 1, line = 2.1)
   mtext(expression(paste(mu, " tot")), side = 2, line = 2, las = 0)
   
@@ -141,7 +143,15 @@ plot_map = function(run, term, type, criterion, optimum = T) {
   if (optimum) {
     opt = dat[which.max(dat[, criterion]), ]
     points(opt$decay_con, opt$decay_tot, col = "black", pch = 16)
-    text(opt$decay_con, opt$decay_tot-1.5, "opt", col = "black", cex = 0.8)
+    text(opt$decay_con, opt$decay_tot-1.5, "opt", col = "black", cex = 1)
+  }
+  
+  # add type if main == F
+  if (!main) {
+    mtext(text = paste0(term, ", ", ifelse(type == "exp", "exponential", "exponential-normal"), " decay")
+          , side = 3
+          , line = -2.5
+          , cex = 6/7)
   }
 }
 
@@ -151,9 +161,13 @@ plot_map = function(run, term, type, criterion, optimum = T) {
 # Plot sum of log likelihood ----------------------------------------------
 
 
-pdf(paste0(path_mortality, "/gridsearch_summary/sumLL.pdf"), height = 9, width = 9)
+pdf(paste0(path_mortality, "/gridsearch_summary/sumLL.pdf")
+    , height = 130/25.4
+    , width = 136/25.4   # column-and-a-half
+    , pointsize = 7
+)
 par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings))))
-    , mar = c(4, 4, 2, 1)
+    , mar = c(4, 4, 1, 1)
     , oma = c(0, 0, 0, 7)
     , las = 1)
 
@@ -165,7 +179,8 @@ for (s in 1:nrow(settings)) {
            , term = settings$term[s]
            , type = settings$decay_type[s]
            , criterion = "sumlogLik"
-           , optimum = settings$run[s] == opt$run)
+           , optimum = settings$run[s] == opt$run
+           , main = F)
 }
 
 # add legend
@@ -179,6 +194,14 @@ imagePlot(legend.only = T
           , legend.mar = 6
           , zlim = range(sums_total[, "sumlogLik"])) 
 
+# add label for panels
+text(grconvertX(c(0.02, 0.46, 0.02, 0.46), from = "ndc")
+     , grconvertY(c(0.98, 0.98, 0.48, 0.48), from = "ndc")
+     , labels = letters[1:4]
+     , cex = 8/7
+     , font = 2
+     , xpd=NA)
+
 dev.off()
 
 
@@ -187,9 +210,14 @@ dev.off()
 # Plot mean of AUC --------------------------------------------------------
 
 
-pdf(paste0(path_mortality, "/gridsearch_summary/meanAUC.pdf"), height = 9, width = 9)
+pdf(paste0(path_mortality, "/gridsearch_summary/meanAUC.pdf")
+    , height = 130/25.4
+    , width = 136/25.4   # column-and-a-half
+    , pointsize = 7
+)
+
 par(mfrow = c(ceiling(sqrt(nrow(settings))), floor(sqrt(nrow(settings))))
-    , mar = c(4, 4, 2, 1)
+    , mar = c(4, 4, 1, 1)
     , oma = c(0, 0, 0, 7)
     , las = 1)
 
@@ -201,7 +229,8 @@ for (s in 1:nrow(settings)) {
            , term = settings$term[s]
            , type = settings$decay_type[s]
            , criterion = "meanAUC"
-           , optimum = settings$run[s] == opt$run)
+           , optimum = settings$run[s] == opt$run
+           , main = F)
 }
 
 # add legend
@@ -214,12 +243,21 @@ imagePlot(legend.only = T
           , legend.width = 1
           , legend.mar = 6
           , zlim = range(sums_total[, "meanAUC"])) 
+
+# add label for panels
+text(grconvertX(c(0.02, 0.46, 0.02, 0.46), from = "ndc")
+     , grconvertY(c(0.98, 0.98, 0.48, 0.48), from = "ndc")
+     , labels = letters[1:4]
+     , cex = 8/7
+     , font = 2
+     , xpd=NA)
+
 dev.off()
 
 
 
-# Save global optimum -----------------------------------------------------
 
+# Save global optimum -----------------------------------------------------
 
 sink(paste0(path_mortality, "/gridsearch_summary/globalOpt.txt"))
 for (criterion in c("sumlogLik", "meanAUC")) {
@@ -280,7 +318,12 @@ for (site in unique(sums_species$site)) {
 
 # plot latitudinal patterns in optimal decay_con
 pdf(paste0(path_mortality, "/gridsearch_summary/optLL_con_species.pdf")
-, height = 4, width = 9)
+    , height = 70/25.4
+    , width = 136/25.4   # column-and-a-half
+    , pointsize = 7
+)
+
+
 par(mfrow = c(1, 2), mar = c(4, 4, 2, 1), las = 1)
 
 smoothScatter(sums_species$abs_latitude, sums_species$decay_con
@@ -327,16 +370,14 @@ for (qu in c(0.25, 0.5, 0.75)) {
           , col = rgb(1, 0.1, 0.1, 0.2), border = NA)
 }
 
-text(grconvertX(0.05, from = "ndc")
-     , grconvertY(0.95, from = "ndc")
-     , labels = "a"
-     , cex = 3/2
-     , xpd=NA)
-text(grconvertX(0.5, from = "ndc")
-     , grconvertY(0.95, from = "ndc")
-     , labels = "b"
-     , cex = 3/2
-     , xpd=NA)
+# add label for panels
+text(grconvertX(c(0.05, 0.5), from = "ndc")
+     , grconvertY(c(0.95, 0.96), from = "ndc")
+     , labels = letters[1:2]
+     , cex = 8/7
+     , font = 2
+     , xpd=NA
+)
 
 dev.off()
 

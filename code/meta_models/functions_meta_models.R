@@ -1218,7 +1218,7 @@ plot_estimates_vsAbundance = function(data, type, order, names = NULL
            col = "white", border = NA)
       
       # axes
-      abline(h = 0, col = "lightgrey", lwd = 0.8, lty = 2)
+      abline(h = 0, col = "grey70", lwd = 0.8, lty = 2)
       axis(1, log(c(0.01, 0.1, 1, 10, 100, 1000, 10000)), labels = NA
            , tck = -0.025, col = color.axes, lwd = 0.8, lwd.ticks = 0.8)
       axis(2, trans(yseq), labels = NA
@@ -1438,7 +1438,8 @@ plot_latitude = function(preds
                          , labelsx = "outer"
                          , labelsy = "outer"
                          , xlim = NULL
-                         , ylim = NULL) {
+                         , ylim = NULL
+                         , plocation = "left") {
   
   runs = names(preds)
   abundances = as.numeric(names(preds[[1]]))
@@ -1473,7 +1474,7 @@ plot_latitude = function(preds
     }
     
     # axes
-    abline(h = 0, col = "grey70")
+    abline(h = 0, col = "grey70", lty = 2)
     axis(1, cex.axis = 1)
     if (i == 1) axis(2, cex.axis = 1) else axis(2, labels = F)
     
@@ -1508,8 +1509,15 @@ plot_latitude = function(preds
         par(xpd = NA)
         
         # define location
-        xloc = pred_run$x_poly[1]
-        yloc = pred_run$pred_line[1] + 0.8*(rev(pred_run$pred_poly)[1] - pred_run$pred_line[1])
+        if (plocation == "left") {
+          loc = 1
+          adj = c(0, 1)
+        } else {
+          loc = which.max(pred_run$x_poly)
+          adj = c(1, 1)
+        }
+        xloc = pred_run$x_poly[loc]
+        yloc = pred_run$pred_line[loc] + 0.8*(rev(pred_run$pred_poly)[loc] - pred_run$pred_line[loc])
         yloc = ifelse(yloc < ylim[2], yloc, ylim[2])
         yloc = ifelse(yloc > ylim[1], yloc, ylim[1])
         
@@ -1518,7 +1526,7 @@ plot_latitude = function(preds
              , yloc
              , pred_run$pvalue
              , cex = 6/7
-             , adj = c(0, 1))
+             , adj = adj)
         par(xpd = F)
       }
       
@@ -1607,7 +1615,7 @@ plot_abundance = function(preds
     }
     
     # axes
-    abline(h = 0, col = "grey70")
+    abline(h = 0, col = "grey70", lty = 2)
     axis(1, transAbund(c(0.1, 1, 10, 100, 1000, 10000), ref_abund), labels = F)
     axis(1, transAbund(c(0.1, 10, 1000), ref_abund), labels = c(0.1, 10, 1000), tick = F)
     if (latitudes[i] == latitudes[1]) axis(2) else axis(2, labels = F)

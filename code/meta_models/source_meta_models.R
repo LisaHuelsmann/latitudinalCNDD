@@ -584,7 +584,8 @@ for (i in 1:length(sitemean_list)) {
   )
   abline(h = 0.4
          , col = "grey70"
-         , lty = 2
+         , lty = 3
+         , lwd = 2
   )
   points(CV ~ abs(latitude), out
          , col = out$col
@@ -763,7 +764,7 @@ for (term in terms) {
         D = cooks.distance(mod, reestimate = F, ncpus = ncpu_meta, parallel = "snow", progbar = F)
         exclude = D>0.005
         dat_reduced = dat[!(exclude | is.na(exclude)), ]
-        
+        sites_reduced = unique(dat_reduced$site)
         
         # fit abundance-mediated model with reduced data
         mod_x = rma.mv(yi = yi
@@ -796,6 +797,7 @@ for (term in terms) {
       } else {
         
         mod_x = mod1_x = NA
+        sites_reduced = NA
         
       }
       
@@ -846,6 +848,7 @@ for (term in terms) {
                  , "transLat" = transLat
                  , "ref_abund" = ref_abund
                  , "ref_lat" = ref_lat
+                 , "sites_reduced" = sites_reduced
                  )
 
       mod_list[[i]] = out
@@ -854,7 +857,7 @@ for (term in terms) {
   }
 }
 
-# save reduced model list to use for comparisons
+# save main models as list to use for comparisons
 mod_list_red = lapply(mod_list, function(x) x[!names(x) %in% c("mod0x", "mod1x", "mod2", "mod3")])
 save(list = c("mod_list_red", "ref_abund", "ref_lat", ls()[sapply(ls(), function(x) is.function(get(x)))])
      , file = paste0(path_meta, run, "/metamodels.Rdata"))
@@ -955,6 +958,8 @@ for (i in 1:length(res[[run]])) {
 dev.off()
 
 
+
+
 # reduced dataset (only for main run)
 if (run == "main") {
 
@@ -978,7 +983,8 @@ if (run == "main") {
     # combine y limits
     ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
                    unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
-                   unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim))))
+                   unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim)),
+                   backtrans(sitemean_list[[i]]$out$mean)*100), na.rm = T)
     
     # plotting
     layout(matrix(c(1, 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7), ncol = 3, byrow = T))
@@ -1009,7 +1015,7 @@ if (run == "main") {
     
     # add label for panels
     text(grconvertX(c(0.02, 0.02, 0.02), from = "ndc")
-         , grconvertY(c(0.98, 0.64, 0.30), from = "ndc")
+         , grconvertY(c(0.98, 0.48, 0.24), from = "ndc")
          , labels = c("a", "b", "c")
          , cex = 8/7
          , font = 2
@@ -1046,8 +1052,14 @@ for (i in 1:length(res[[run]])) {
   # generate predictions
   preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1", pvalue = T)
   
+  # other predictions for y limits
+  preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0", pvalue = F)
+  preds_lat_abund = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0", pvalue = F)
+  
   # combine y limits
   ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
+                 unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
+                 unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim)),
                  backtrans(sitemean_list[[i]]$out$mean)*100), na.rm = T)
   
   # plotting
@@ -1058,6 +1070,7 @@ for (i in 1:length(res[[run]])) {
                 , labelsx = 1, labelsy = 1
                 , ylim = ylim
                 , col = "black"
+                , plocation = "right"
   )
   
   # add site-specific means
@@ -1120,9 +1133,14 @@ for (i in 1:length(res[[run]])) {
   preds_abund = lapply(res_i, get_predictions_abundance, latitudes = latitudes, select = "mod0", pvalue = T)
   preds_lat_abund = lapply(res_i, get_predictions_latitude, abundances = abundance, select = "mod0", pvalue = T)
   
+  # other predictions for y limits
+  preds_lat = lapply(res_i, get_predictions_latitude, abundances = 1,  select = "mod1", pvalue = F)
+  
   # combine y limits
-  ylim = range(c(unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
-                 unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim))))
+  ylim = range(c(unlist(lapply(preds_lat, function(x) x[[1]]$ylim)),
+                 unlist(lapply(preds_abund, function(x) x[[1]]$ylim)),
+                 unlist(lapply(preds_lat_abund, function(x) x[[1]]$ylim)),
+                 backtrans(sitemean_list[[i]]$out$mean)*100), na.rm = T)
   
   # plotting
   layout(matrix(c(1, 2, 3, 4, 5, 6), ncol = 3, byrow = T))
@@ -1283,6 +1301,10 @@ for (i in settings$names) {
       # add n
       add_footer_lines(values = paste("n", "=", sum(x[[i]]$not.na))) %>%
       
+      # add n sites
+      add_footer_lines(values = ifelse(i %in% c("mod0x", "mod1x")
+                                       , paste0("N sites = ", length(x$sites_reduced))
+                                       , paste0("N sites = ", 23))) %>% 
       
       theme_booktabs()
   })
@@ -1310,11 +1332,10 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
   
   pdf(paste0(path_meta, run, "/iqr.pdf")
       , height = 100/25.4
-      , width = 183/25.4  # double column 
+      , width = 89/25.4  # single column 
       , pointsize = 7
   )
-  par(mfrow = c(1, 2)
-      , mar = c(4, 5, 3, 1)
+  par(mar = c(4, 5, 1, 1)
       , las = 1)
   
   change = "iqr"
@@ -1342,9 +1363,9 @@ if (sum(AMEsums_global$change == "iqr") > 0) {
       # histogram
       unit = ifelse(type == "AME", "(% / year)", "(%)")
       hist(backtrans(dat_sel$estimate)*100
-           , main = type
            , xlab = paste("stabilizing CNDD", unit)
            , xlim = xlim
+           , main = ""
            , breaks = breaks
            , border = "grey70"
            , ylim = ylim)
