@@ -47,6 +47,7 @@ sites = sort(unique(AMEsamples_global$site))
 
 
 
+
 # Settings ----------------------------------------------------------------
 
 
@@ -71,6 +72,8 @@ abundance = c(1, 10, 100)
 
 
 
+
+
 # Transformations ---------------------------------------------------------
 
 
@@ -87,6 +90,35 @@ backtrans_AME = function(x) x
 trans_rAME = function(x) log(x+1)
 backtrans_rAME = function(x) exp(x)-1
 
+
+
+
+
+# Fix error in demo data run ----------------------------------------------
+
+
+# drop sites where only one sp estimate is available (only applies to demo data)
+
+if (grepl("site", sites[1])) {
+  
+  sums_global %>% 
+    group_by(site) %>% 
+    mutate(n = n()) %>% 
+    filter(n > 1) %>% 
+    select(site) -> temp
+  sites = unique(temp$site)
+  
+  # define current output objects
+  output_objects = ls()[grepl("_global", ls())]
+  
+  for (o in output_objects) {
+    
+    temp = get(o)
+    assign(o, temp[temp$site %in% sites, ])
+  }
+  
+  
+}
 
 
 
@@ -132,7 +164,9 @@ for (type in types) {
 # Add meta information -----------------------------------------------------
 
 
+# define output objects
 output_objects = gsub("_global", "", ls()[grepl("_global", ls())])
+
 
 source("code/meta_models/source_add_meta_information.R", local = T)
 
@@ -154,6 +188,9 @@ sums_global %>%
             logit_survival = qlogis(1-mort_rate),
             log_size = log(dbh_q90)) -> M
 M$log1p_growth[is.na(M$log1p_growth)] = 0
+
+
+
 
 # calculate standardized demographic rates per site
 M %>% 
@@ -374,7 +411,7 @@ for (term in terms) {
       mtext(paste("stabilizing CNDD", unit), side = 2, line = -0.1, outer = T, cex = 0.6)
       
       # circular coordinates
-      multiCoords = circular_coor(order = site_order, inner = ifelse(length(site_order) == 23, 7, 5))
+      multiCoords = circular_coor(order = site_order, inner = ifelse(length(site_order) == 23, 7, 3))
       multiCenter = cbind(rowMeans(multiCoords[, 1:2]), rowMeans(multiCoords[, 3:4]))
       
       # add map in center
@@ -1181,63 +1218,66 @@ dev.off()
 
 # https://stats.stackexchange.com/questions/155693/metafor-package-bias-and-sensitivity-diagnostics
 
-pdf(paste0(path_meta, run, "/model_checks.pdf"))
-
-lapply(res[[run]], function(x) {
-
-  par(mfrow = c(2, 2), las = 1, mar = c(4, 2, 3, 1))
-
-  # get residuals
-  rs = residuals(x$mod0, type = "rstandard") # rstudent is very slow because of refitting the model
-  d = as.data.frame(x$mod0$X)
-  d$res = rs
-
-  # distribution check
-  stats::qqnorm(rs, col = rgb(0, 0, 0, 0.4), cex = 0.3)
-  stats::qqline(rs)
-
-  # against predicted
-  d$fitted = fitted(x$mod0)
-  plot(d$fitted, d$res)
-  xlim = range(d$fitted)
-  x_line = seq(xlim[1], xlim[2], length.out = 200)
-  xs = data.frame(fitted = x_line)
-  q = qgam::mqgam(res ~ s(fitted)
-                  , qu = c(0.25, 0.5, 0.75), data = d)
-  for(iq in c(0.25, 0.5, 0.75)){
-    pred <- qdo(q, iq, predict, newdata = xs)
-    lines(xs$fitted, pred, col = 2)
-  }
-
-  # against latitude
-  plot(d$tLatitude, d$res)
-  xlim = c(0, max(x$data$latitude))
-  x_line = seq(xlim[1], xlim[2], length.out = 200)
-  xs = data.frame(tLatitude = x$transLat(x_line, ref_lat))
-  q = qgam::mqgam(res ~ s(tLatitude)
-                  , qu = c(0.25, 0.5, 0.75), data = d)
-  for(iq in c(0.25, 0.5, 0.75)){
-    pred <- qdo(q, iq, predict, newdata = xs)
-    lines(xs$tLatitude, pred, col = 2)
-  }
-
-  # against abundance
-  plot(d$tAbundance, d$res)
-  xlim = c(min(x$data$abundance), max(x$data$abundance))
-  x_line = seq(xlim[1], xlim[2], length.out = 200)
-  xs = data.frame(tAbundance = x$transAbund(x_line, ref_abund))
-  q = qgam::mqgam(res ~ s(tAbundance)
-                  , qu = c(0.25, 0.5, 0.75), data = d)
-  for(iq in c(0.25, 0.5, 0.75)){
-    pred <- qdo(q, iq, predict, newdata = xs)
-    lines(xs$tAbundance, pred, col = 2)
-  }
-
-})
-
-dev.off()
-
-
+# not for demo data
+if (!grepl("site", sites[1])) {
+  
+  pdf(paste0(path_meta, run, "/model_checks.pdf"))
+  
+  lapply(res[[run]], function(x) {
+    
+    par(mfrow = c(2, 2), las = 1, mar = c(4, 2, 3, 1))
+    
+    # get residuals
+    rs = residuals(x$mod0, type = "rstandard") # rstudent is very slow because of refitting the model
+    d = as.data.frame(x$mod0$X)
+    d$res = rs
+    
+    # distribution check
+    stats::qqnorm(rs, col = rgb(0, 0, 0, 0.4), cex = 0.3)
+    stats::qqline(rs)
+    
+    # against predicted
+    d$fitted = fitted(x$mod0)
+    plot(d$fitted, d$res)
+    xlim = range(d$fitted)
+    x_line = seq(xlim[1], xlim[2], length.out = 200)
+    xs = data.frame(fitted = x_line)
+    q = qgam::mqgam(res ~ s(fitted)
+                    , qu = c(0.25, 0.5, 0.75), data = d)
+    for(iq in c(0.25, 0.5, 0.75)){
+      pred <- qdo(q, iq, predict, newdata = xs)
+      lines(xs$fitted, pred, col = 2)
+    }
+    
+    # against latitude
+    plot(d$tLatitude, d$res)
+    xlim = c(0, max(x$data$latitude))
+    x_line = seq(xlim[1], xlim[2], length.out = 200)
+    xs = data.frame(tLatitude = x$transLat(x_line, ref_lat))
+    q = qgam::mqgam(res ~ s(tLatitude)
+                    , qu = c(0.25, 0.5, 0.75), data = d)
+    for(iq in c(0.25, 0.5, 0.75)){
+      pred <- qdo(q, iq, predict, newdata = xs)
+      lines(xs$tLatitude, pred, col = 2)
+    }
+    
+    # against abundance
+    plot(d$tAbundance, d$res)
+    xlim = c(min(x$data$abundance), max(x$data$abundance))
+    x_line = seq(xlim[1], xlim[2], length.out = 200)
+    xs = data.frame(tAbundance = x$transAbund(x_line, ref_abund))
+    q = qgam::mqgam(res ~ s(tAbundance)
+                    , qu = c(0.25, 0.5, 0.75), data = d)
+    for(iq in c(0.25, 0.5, 0.75)){
+      pred <- qdo(q, iq, predict, newdata = xs)
+      lines(xs$tAbundance, pred, col = 2)
+    }
+    
+  })
+  
+  dev.off()
+  
+}
 
 
 

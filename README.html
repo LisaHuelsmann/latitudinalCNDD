@@ -368,9 +368,9 @@ pre code {
 <div id="latitudinal-cndd-analysis-by-hülsmann-et-al." class="section level1">
 <h1>Latitudinal CNDD analysis by Hülsmann et al.</h1>
 <p>This repository contains the code to reproduce the analyses by
-Hülsmann et al., which uses repeated census data from twenty-three large
-forest sites from the <a href="https://forestgeo.si.edu/">ForestGEO
-network</a> to analyze latitudinal patterns in conspecific negative
+Hülsmann et al., which uses repeated census data from 23 large forest
+sites from the <a href="https://forestgeo.si.edu/">ForestGEO network</a>
+to analyze latitudinal patterns in stabilizing conspecific negative
 density dependence (CNDD).</p>
 <p>The repository holds the folders <a href="/code"><strong>code</strong></a> (all Rscripts), <a href="/data_prep"><strong>data_prep</strong></a> (input and derived
 output data to run the analyses) and <a href="/reproducibility_exports"><strong>reproducibility_exports</strong></a>
@@ -382,20 +382,54 @@ tables for the Extended Data.</p>
 available, we generated ‘fake sites’ based on small samples of the
 dataset from Barro Colorado Island (BCI, Panama) available <a href="https://datadryad.org/stash/dataset/doi:10.15146/5xcp-0d46">here</a>.
 These fake sites were artificially aligned along a latitudinal gradient
-to be able to run the full analysis pipeline (<em>June 6 2023: Note that
-the meta-analyses scripts are not yet fully working because the reduced
-dataset is too small).</em></p>
+to be able to run the full analysis pipeline.</p>
 <div id="methodology" class="section level2">
 <h2>Methodology</h2>
-<p>We analyzed latitudinal patterns in conspecific negative density
-dependence (CNDD) following a three-step approach: First, we fitted
-species-site-specific mortality models from repeated observations of
-individual trees. Second, we used these models to quantify CNDD for each
-species and site using an estimator designed to maximize robustness,
-comparability, and relevance for fitness and stabilization. Third, we
-used meta-regressions to explore latitudinal patterns in CNDD.
-Robustness of the analysis pipeline was validated by model diagnostics
-and randomization.</p>
+<p>We used repeated census data from 23 large forest sites around the
+globe to analyze latitudinal patterns in stabilizing conspecific
+negative density dependence (CNDD) following a three-step approach:
+First, we fitted species-site-specific mortality models from repeated
+observations of individual trees. Second, we used these models to
+quantify CNDD for each species and site using an estimator designed to
+maximize robustness, comparability, and relevance for fitness and
+stabilization. Third, we used meta-regressions to explore three distinct
+latitudinal patterns in CNDD derived from the hypothesis that CNDD is
+more influential for maintaining local tree species diversity in the
+tropics. Robustness of the analysis pipeline was validated by model
+diagnostics and randomization.</p>
+<p>This approach is based on recently developed best-practice
+statistical methods for estimating CNDD. Crucially, the use of dynamic
+mortality data allowed us to avoid the statistical pitfalls of previous
+CNDD studies, in particular analyses of the static relationship of
+number of saplings to number of adults, where the null hypothesis is a
+positive linear relationship but regression dilution flattens this
+relationship and thus biases analyses towards finding CNDD, especially
+for rare species. By fitting mortality models where the null hypothesis
+is no relationship between survival and number of conspecific neighbors,
+we ensure that any regression dilution has a conservative effect by
+reducing CNDD estimates. We also addressed other recently identified
+limitations of CNDD analyses, namely non-linear and saturating CNDD, the
+comparability of CNDD among species and sites, and the extent to which
+CNDD estimates are meaningful for stabilization and species
+coexistence.</p>
+</div>
+<div id="system-and-r-packages" class="section level2">
+<h2>System and R Packages</h2>
+<p>All analyses were conducted in R version 4.2.1 on Ubuntu 20.04.4 LTS,
+but the code has also been tested on macOS Monterey 12.6.</p>
+<p>Major steps of the analyses were carried out with the following R
+packages:</p>
+<ul>
+<li><p>mgcv (Version 1.8-40)</p></li>
+<li><p>metafor (Version 3.4-0)</p></li>
+<li><p>DHARMa (Version 0.4.6)</p></li>
+</ul>
+<p>The expected runtime for the demo dataset on a normal computer is
+approx. a few minutes for the data preparation, approx. 24h for the
+mortality models (the grid search is computationally quite expensive),
+20min for the meta-regressions, and a few seconds for the tables.
+Runtime can be reduced when using more cores for the mortality models
+and meta-regressions.</p>
 </div>
 <div id="contact" class="section level2">
 <h2>Contact</h2>

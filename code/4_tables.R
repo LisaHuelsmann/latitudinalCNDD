@@ -26,7 +26,7 @@ if (!exists("path_mortality")) path_mortality = "out/mortality_models/"
 if (!exists("path_meta")) path_meta = "out/meta_models/"
 
 # Tables
-if (!exists("path_tables")) path_meta = "out/tables/"
+if (!exists("path_tables")) path_tables = "out/tables/"
 
 
 # create folder for tables
