@@ -385,8 +385,8 @@ grat = st_graticule(lat = c(-90, -45, 0, 45, 90)
 
 
 pdf(paste0(path_meta, run, "/Fig1.pdf")
-    , height = 247/25.4*0.7
-    , width = 183/25.4)
+    , height = 170/25.4
+    , width = 180/25.4)
 
 
 site_models = list()
