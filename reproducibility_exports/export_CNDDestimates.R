@@ -1,6 +1,6 @@
 
 
-# Export species-annonymized CNDD estimates
+# Export species-anonymized CNDD estimates
 
 library(dplyr)
 
@@ -174,5 +174,5 @@ for (i in output_objects) {
 
 
 save(list = c("AMEsums_global", "rAMEsums_global", "sums_global", "nsp_global")
-     , file = "reproducibility_exports/global_mortality.Rdata")
+     , file = "reproducibility_exports/global_mortality.RData")
 

@@ -1,6 +1,6 @@
 # Shared data for reproducibility
 
-This folder contains an Rdata file that includes the R objects necessary to calibrate the main meta-regressions with the species-specific CNDD estimates (global_mortality.Rdata). The file includes the following objects
+This folder contains an RData file that includes the R objects necessary to calibrate the main meta-regressions with the species-specific CNDD estimates (global_mortality.RData). The file includes the following objects
 
 -   nsp_global: species-site-level information on number of observations, unique values and range of conspecific density (includes all species available per site)
 
