@@ -4,10 +4,10 @@
 
 # Session Data files
 .RData
+!/reproducibility_exports/global_mortality.Rdata
 
 # User-specific files
 .Ruserdata
-!**/global_mortality.Rdata
 
 # Example code in package build process
 *-Ex.R
