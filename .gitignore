@@ -7,7 +7,7 @@
 
 # User-specific files
 .Ruserdata
-!global_mortality.Rdata
+!**/global_mortality.Rdata
 
 # Example code in package build process
 *-Ex.R
