@@ -578,7 +578,7 @@ sink()
 
 pdf(paste0(path_meta, run, "/Fig4.pdf")
     , height = 100/25.4
-    , width = 183/25.4  # double column 
+    , width = 180/25.4  # double column 
     , pointsize = 7
 )
 
