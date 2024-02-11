@@ -260,7 +260,7 @@ pdf(paste0(path_meta, run, "/data_overview.pdf")
 par(mfrow = c(2, 2))
 for (i in c("logit_survival", "log1p_growth")) {
   smoothScatter(M$log_abundance, M[, i]
-                , xlab = "abundance (N/ha)", ylab = gsub("_", " ", i)
+                , xlab = "abundance (trees per ha)", ylab = gsub("_", " ", i)
                 , transformation = function(x) x^.5
                 , xaxt = "n"
                 , nrpoints = 0
@@ -296,7 +296,7 @@ text(grconvertX(0.5, from = "ndc")
 
 # plot abundance vs latitude
 smoothScatter(M$abs_latitude, M$log_abundance
-              , ylab = "abundance (N/ha)", xlab = "latitude (°)"
+              , ylab = "abundance (trees per ha)", xlab = "latitude (°)"
               , transformation = function(x) x^.5
               , yaxt = "n"
               , nrpoints = 0
@@ -406,7 +406,7 @@ for (term in terms) {
       plot.new()
       
       # axes labels
-      mtext("abundance (N/ha)", side = 1, line = -0.5, outer = T, cex = 0.6)
+      mtext("abundance (trees per ha)", side = 1, line = -0.5, outer = T, cex = 0.6)
       unit = ifelse(type == "AME", "(% / year)", "(%)")
       mtext(paste("stabilizing CNDD", unit), side = 2, line = -0.1, outer = T, cex = 0.6)
       
@@ -616,7 +616,7 @@ for (i in 1:length(sitemean_list)) {
   lines(lats, pred$fit)
   polygon(c(lats, rev(lats))
           , c(pred$fit + 1.96*pred$se.fit, rev(pred$fit - 1.96*pred$se.fit))
-          , col = add.alpha("black", 0.05)
+          , col = add.alpha("black", 0.1)
           , border = F
   )
   abline(h = 0.4
@@ -967,7 +967,7 @@ for (i in 1:length(res[[run]])) {
   points(abs(out_trans$latitude)
          , out_trans$mean
          , pch = 16
-         , col = add.alpha("black", 0.2))
+         , col = add.alpha("black", 0.5))
   
   # latitude*abundance model latitude-moderated
   col = cols[match(cut(latitudes, breaks = lat_breaks, right = F), cuts_levels)]

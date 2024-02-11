@@ -1466,8 +1466,9 @@ plot_latitude = function(preds
     
     # abundance label
     if (length(abundances) > 1) {
+      unit = ifelse(abundances[i] > 1, " trees per ha", " tree per ha")
       graphics::text(xlim[2], 0.9*ylim[2]
-                     , paste0("Species abundance\n", abundances[i], " N/ha")
+                     , paste0("Species abundance\n", abundances[i], unit)
                      , adj = 1
                      , cex = 6/7
                      , pos = 2)
@@ -1623,7 +1624,7 @@ plot_abundance = function(preds
     
     # inner labels
     if (i %in% labelsx) {
-      mtext("abundance (N/ha)", 1, 2.5, cex = 1)
+      mtext("abundance (trees per ha)", 1, 2.5, cex = 1)
     }
     if (i %in% labelsy) {
       unit = ifelse(type == "AME", "(% / year)", "(%)")
@@ -1696,7 +1697,7 @@ plot_abundance = function(preds
   mtext(preds[[run]][[1]]$label, 3, 1, outer = T)
   
   if (labelsx == "outer") {
-    mtext("abundance (N/ha)", 1, 1, outer = T, cex = 2/3)
+    mtext("abundance (trees per ha)", 1, 1, outer = T, cex = 2/3)
   }
   if (labelsy == "outer") {
     unit = ifelse(type == "AME", "(% / year)", "(%)")
