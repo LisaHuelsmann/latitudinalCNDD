@@ -1,6 +1,6 @@
 # Latitudinal CNDD analysis by Hülsmann et al.
 
-This repository contains the code to reproduce the analyses by Hülsmann et al. "Latitudinal patterns in stabilizing density dependence of forest communities", which uses repeated census data from 23 large forest sites from the [ForestGEO network](https://forestgeo.si.edu/) to analyze latitudinal patterns in stabilizing conspecific negative density dependence (CNDD).
+This repository contains the code to reproduce the analyses by [Hülsmann et al.](https://www.nature.com/articles/s41586-024-07118-4) "Latitudinal patterns in stabilizing density dependence of forest communities", _Nature_ 2024, which uses repeated census data from 23 large forest sites from the [ForestGEO network](https://forestgeo.si.edu/) to analyze latitudinal patterns in stabilizing conspecific negative density dependence (CNDD).
 
 The repository holds the folders [**code**](/code) (all Rscripts), [**data_prep**](/data_prep) (input and derived output data to run the analyses) and [**reproducibility_exports**](/reproducibility_exports) (CNDD estimates to reproduce the main meta-regressions). Moreover, when running the analysis pipeline, a folder **out** will be created with the results of mortality models, meta-regressions, and tables for the Extended Data.
 
